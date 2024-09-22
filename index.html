@@ -205,8 +205,10 @@
 
         let prevT = 0;
         function update(t) {
-            if (prevT > 0) {
-                const dt = (t - prevT) / 1000;
+            const dt = (t - prevT) / 1000;
+
+            // Don't simulate the first tick, and don't simulate if we got paused because we switched to another tab.
+            if (dt < 0.1) {
                 simulate(dt);
             }
             draw();
