@@ -96,6 +96,7 @@
 
         // Pixels per meter. https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Values_and_units
         const ppm = 3780;
+        const zoom = 1;
 
         // World coordinates are in meters. Canvas coordinates are in device pixels.
         const canvas = document.getElementById('canvas');
@@ -103,7 +104,7 @@
 
         // scaled world -> canvas
         function C(n) {
-            return n * ppm;
+            return n * ppm * zoom;
         }
 
         function cX(pos) {
@@ -116,7 +117,7 @@
 
         // scaled canvas -> world
         function W(n) {
-            return n / ppm;
+            return n / ppm / zoom;
         }
 
         function wX(pos) {
