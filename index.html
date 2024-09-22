@@ -127,8 +127,13 @@
             return W(canvas.height - pos.y);
         }
 
-        let viewport = Rect(Pt(0, 0), Sz(0, 0));      // measured in canvas coordinates
-        let worldViewport = Rect(Pt(0, 0), Sz(0, 0)); // measured in world coordinates
+        function rand(min, max) {
+            if (max === undefined) {
+                max = min;
+                min = 0;
+            }
+            return Math.random() * (max - min) + min;
+        }
 
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
@@ -139,25 +144,60 @@
             worldViewport = Rect(Pt(0, 0), Sz(W(canvas.width), W(canvas.height)));
         }
 
-        function draw() {
-            // draw a 1cm blue circle in the center of the viewport
-            const c = Pt(worldViewport.midX, worldViewport.midY);
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const ball = (() => {
             const r = cm(1);
 
+            const w = W(canvas.width);
+            const h = W(canvas.height);
+
+            const x = rand(w - 2*r) + r;
+            const y = h - r;
+
+            return {
+                r: r,
+                p: Pt(x, y),
+                v: Pt(0, 0),
+            }
+        })();
+
+
+        const substeps = 20;
+        const g = -9.81; // m/s^2
+
+        function simulate(dt) {
+            const dts = dt / substeps;
+            for (let i = 0; i < substeps; i++) {
+                ball.v.y += g * dts;
+                ball.p.x += ball.v.x * dts;
+                ball.p.y += ball.v.y * dts;
+            }
+        }
+
+        function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             ctx.beginPath();
-            ctx.arc(cX(c), cY(c), C(r), 0, 2 * Math.PI);
+            ctx.arc(cX(ball.p), cY(ball.p), C(ball.r), 0, 2 * Math.PI);
             ctx.fillStyle = 'blue';
             ctx.fill();
         }
+        
 
-        window.addEventListener('resize', () => {
-            resizeCanvas();
+        let prevT = 0;
+        function update(t) {
+            if (prevT > 0) {
+                const dt = (t - prevT) / 1000;
+                simulate(dt);
+            }
             draw();
-        });
+            prevT = t;
+            requestAnimationFrame(update);
+        }
 
-        resizeCanvas();
-        draw();
+        update();
     </script>
 </body>
 </html>
