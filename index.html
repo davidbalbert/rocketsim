@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>rocketsim</title>
+    <meta charset="utf-8">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas {
+            display: block;
+            border: 1px solid black;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        class Point {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+        }
+
+        function Pt(x, y) {
+            return new Point(x, y);
+        }
+
+        class Size {
+            constructor(width, height) {
+                this.width = width;
+                this.height = height;
+            }
+        }
+
+        function Sz(width, height) {
+            return new Size(width, height);
+        }
+
+        class Rectangle {
+            constructor(origin, size) {
+                this.origin = origin;
+                this.size = size;
+            }
+
+            get minX() {
+                return this.origin.x;
+            }
+
+            get minY() {
+                return this.origin.y;
+            }
+
+            get maxX() {
+                return this.origin.x + this.size.width;
+            }
+
+            get maxY() {
+                return this.origin.y + this.size.height;
+            }
+
+            get midX() {
+                return this.origin.x + this.size.width/2;
+            }
+
+            get midY() {
+                return this.origin.y + this.size.height/2;
+            }
+        }
+
+        function Rect(origin, size) {
+            return new Rectangle(origin, size);
+        }
+
+        // cm -> m
+        function cm(cm) {
+            return cm / 100;
+        }
+
+        // mm -> m
+        function mm(mm) {
+            return mm / 1000;
+        }
+
+        // Pixels per meter. https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Values_and_units
+        const ppm = 3780;
+
+        // World coordinates are in meters. Canvas coordinates are in device pixels.
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext("2d");
+
+        // scaled world -> canvas
+        function C(n) {
+            return n * ppm;
+        }
+
+        function cX(pos) {
+            return C(pos.x);
+        }
+
+        function cY(pos) {
+            return canvas.height - C(pos.y);
+        }
+
+        // scaled canvas -> world
+        function W(n) {
+            return n / ppm;
+        }
+
+        function wX(pos) {
+            return W(pos.x);
+        }
+
+        function wY(pos) {
+            return W(canvas.height - pos.y);
+        }
+
+        let viewport = Rect(Pt(0, 0), Sz(0, 0));      // measured in canvas coordinates
+        let worldViewport = Rect(Pt(0, 0), Sz(0, 0)); // measured in world coordinates
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            viewport = Rect(Pt(0, 0), Sz(canvas.width, canvas.height));
+            worldViewport = Rect(Pt(0, 0), Sz(W(canvas.width), W(canvas.height)));
+        }
+
+        function draw() {
+            // draw a 1cm blue circle in the center of the viewport
+            const c = Pt(worldViewport.midX, worldViewport.midY);
+            const r = cm(1);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(cX(c), cY(c), C(r), 0, 2 * Math.PI);
+            ctx.fillStyle = 'blue';
+            ctx.fill();
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            draw();
+        });
+
+        resizeCanvas();
+        draw();
+    </script>
+</body>
+</html>
