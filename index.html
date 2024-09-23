@@ -37,11 +37,6 @@
                 return new Vector(this.x, this.y);
             }
 
-            set(v) {
-                this.x = v.x;
-                this.y = v.y;
-            }
-
             add(v, scale = 1) {
                 this.x += v.x * scale;
                 this.y += v.y * scale;
@@ -230,32 +225,37 @@
                     minD = d;
                     minDist = dist;
                     closest = c;
-                    norm = vsub(b, a).perp();
+                    norm = vsub(b, a).perp(); // normal to the segment
                 }
             }
 
-            if (minDist === 0) {
-                minD.set(norm);
-                minDist = minD.len();
-            }
-            minD.scale(1 / minDist);
+            let d = minD;       // ball.center - closest
+            let dist = minDist; // distance from ball.center to closest
 
-            if (minD.dot(norm) >= 0) {
-                if (minDist > ball.r) {
+            if (dist === 0) {
+                d = norm;
+                dist = d.len();
+            }
+
+            // a normalized vector pointing from the closest point on the segment towards the center of the ball.
+            d.scale(1 / dist);
+
+            if (d.dot(norm) >= 0) {
+                if (dist > ball.r) {
                     return;
                 }
-                ball.p.add(minD, ball.r - minDist);
+                ball.p.add(d, ball.r - dist);
             } else {
-                ball.p.add(minD, -(ball.r + minDist));
+                ball.p.add(d, -(ball.r + dist));
             }
 
-            const v = ball.v.dot(minD);
+            const v = ball.v.dot(d);
             const vnew = Math.abs(v) * ball.restitution;
 
-            ball.v.add(minD, vnew - v);
+            ball.v.add(d, vnew - v);
         }
 
-        const substeps = 50;
+        const substeps = 100;
         const g = Vec(0, -9.81); // m/s^2
 
         function simulate(dt) {
