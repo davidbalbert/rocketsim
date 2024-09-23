@@ -162,100 +162,11 @@
             return {
                 r: r,
                 p: Vec(x, y),
-                v: Vec(1, 0),
-                restitution: 1,
+                v: Vec(0.3, 0),
             }
         })();
 
-        // Find the closest point on segment ab to point p.
-        //
-        // c - the closest point on the segment.
-        // norm - the normalized segment
-        //
-        // c = a + t(b - a) for t in [0, 1]
-        // norm = (b - a)/|b - a|
-        // lenAC = (p - a) . norm
-        // lenAB = (b - a) . norm
-        //
-        // Simplifying t:
-        // t = lenAC / lenAB
-        // t = ((p - a) . norm) / ((b - a) . norm)
-        // t = ((p - a) . (b - a)/|b - a|) / ((b - a) . (b - a)/|b - a|)
-        //
-        // Division by a scalar can be pulled out of the dot product:
-        // t = (((p - a) . (b - a)) / |b - a|) / ((b - a) . (b - a) / |b - a|)
-        // And because it appears in both the numerator and denominator, we can cancel it out:
-        // t = (p - a) . (b - a) / (b - a) . (b - a)
-        //
-        // This means we don't have to calculate norm.
-        function closestPointOnSegment(p, a, b) {
-            const ab = vsub(b, a);
-            const lensq = ab.dot(ab); // |b - a|^2
-            if (lensq === 0) {
-                return a.copy();
-            }
-            t = clamp((p.dot(ab) - a.dot(ab)) / lensq, 0, 1);
-            return Vec(a.x + ab.x * t, a.y + ab.y * t);
-        }
-
-        function collideBallWithWalls() {
-            // must be defined counter clockwise
-            // A     D
-            // |     |
-            // B-----C
-
-            const A = Vec(0, worldSize.height);
-            const B = Vec(0, 0);
-            const C = Vec(worldSize.width, 0);
-            const D = Vec(worldSize.width, worldSize.height);
-
-            let minD = null; // closest point on segment to the center of the ball.
-            let minDist = Infinity;
-            let closest = null;
-            let norm = null
-
-            const points = [A, B, C, D];
-            for (let i = 0; i < points.length-1; i++) {
-                const a = points[i];
-                const b = points[i+1];
-                const c = closestPointOnSegment(ball.p, a, b);
-                let d = vsub(ball.p, c);
-                const dist = d.len();
-                if (dist < minDist) {
-                    minD = d;
-                    minDist = dist;
-                    closest = c;
-                    norm = vsub(b, a).perp(); // normal to the segment
-                }
-            }
-
-            let d = minD;       // ball.center - closest
-            let dist = minDist; // distance from ball.center to closest
-
-            if (dist === 0) {
-                d = norm;
-                dist = d.len();
-            }
-
-            // a normalized vector pointing from the closest point on the segment towards the center of the ball.
-            d.scale(1 / dist);
-
-            if (d.dot(norm) >= 0) {
-                if (dist > ball.r) {
-                    return;
-                }
-                ball.p.add(d, ball.r - dist);
-            } else {
-                ball.p.add(d, -(ball.r + dist));
-            }
-
-            const v = ball.v.dot(d);
-            const vnew = Math.abs(v) * ball.restitution;
-
-            ball.v.add(d, vnew - v);
-        }
-
-        const substeps = 100;
+        const substeps = 50;
         const g = Vec(0, -9.81); // m/s^2
 
         function simulate(dt) {
@@ -266,7 +177,18 @@
                 const prevP = ball.p.copy();
                 ball.p.add(ball.v, dts);
 
-                collideBallWithWalls();
+                if (ball.p.y < ball.r) {
+                    ball.p.y = ball.r;
+                    ball.v.y = -ball.v.y;
+                }
+                if (ball.p.x < ball.r) {
+                    ball.p.x = ball.r;
+                    ball.v.x = -ball.v.x;
+                }
+                if (ball.p.x > worldSize.width - ball.r) {
+                    ball.p.x = worldSize.width - ball.r;
+                    ball.v.x = -ball.v.x;
+                }
             }
         }
 
