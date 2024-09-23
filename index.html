@@ -32,10 +32,45 @@
                 this.x = x;
                 this.y = y;
             }
+
+            copy() {
+                return new Vector(this.x, this.y);
+            }
+
+            set(v) {
+                this.x = v.x;
+                this.y = v.y;
+            }
+
+            add(v, scale = 1) {
+                this.x += v.x * scale;
+                this.y += v.y * scale;
+            }
+
+            scale(scale) {
+                this.x *= scale;
+                this.y *= scale;
+            }
+            
+            len() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+
+            dot(v) {
+                return this.x * v.x + this.y * v.y;
+            }
+
+            perp() {
+                return new Vector(-this.y, this.x);
+            }
         }
 
         function Vec(x, y) {
             return new Vector(x, y);
+        }
+
+        function vsub(a, b) {
+            return Vec(a.x - b.x, a.y - b.y);
         }
 
         class Size {
@@ -47,41 +82,6 @@
 
         function Sz(width, height) {
             return new Size(width, height);
-        }
-
-        class Rectangle {
-            constructor(origin, size) {
-                this.origin = origin;
-                this.size = size;
-            }
-
-            get minX() {
-                return this.origin.x;
-            }
-
-            get minY() {
-                return this.origin.y;
-            }
-
-            get maxX() {
-                return this.origin.x + this.size.width;
-            }
-
-            get maxY() {
-                return this.origin.y + this.size.height;
-            }
-
-            get midX() {
-                return this.origin.x + this.size.width/2;
-            }
-
-            get midY() {
-                return this.origin.y + this.size.height/2;
-            }
-        }
-
-        function Rect(origin, size) {
-            return new Rectangle(origin, size);
         }
 
         // cm -> m
@@ -127,6 +127,7 @@
         function wY(pos) {
             return W(canvas.height - pos.y);
         }
+        
 
         function rand(min, max) {
             if (max === undefined) {
@@ -134,6 +135,10 @@
                 min = 0;
             }
             return Math.random() * (max - min) + min;
+        }
+
+        function clamp(n, min, max) {
+            return Math.min(Math.max(n, min), max);
         }
 
         let worldSize = Sz(0, 0);
@@ -163,36 +168,62 @@
                 r: r,
                 p: Vec(x, y),
                 v: Vec(0, 0),
+                restitution: 0.9,
             }
         })();
 
+        function closestPointOnSegment(p, a, b) {
+            const ab = vsub(b, a);
+            let t = ab.dot(ab);
+            if (t === 0) {
+                return a.copy();
+            }
+            t = clamp((p.dot(ab) - a.dot(ab)) / t, 0, 1);
+            return Vec(a.x + ab.x * t, a.y + ab.y * t);
+        }
 
         const substeps = 20;
-        const g = -9.81; // m/s^2
+        const g = Vec(0, -9.81); // m/s^2
 
         function simulate(dt) {
             const dts = dt / substeps;
             for (let i = 0; i < substeps; i++) {
-                ball.v.x += 0 * dts;
-                ball.v.y += g * dts;
+                ball.v.add(g, dts);
 
-                ball.p.x += ball.v.x * dts;
-                ball.p.y += ball.v.y * dts;
+                const prevP = ball.p.copy();
+                ball.p.add(ball.v, dts);
 
-                if (ball.p.x - ball.r < 0) {
-                    ball.p.x = ball.r;
-                    ball.v.x = -ball.v.x;
+                // ground: a-----b
+                const a = Vec(0, 0);
+                const b = Vec(worldSize.width, 0);
+
+                // collide ball with ground
+                const ab = vsub(b, a);
+                const norm = ab.perp();
+
+                const c = closestPointOnSegment(ball.p, a, b);
+                const d = vsub(ball.p, c);
+                let dist = d.len();
+
+                if (dist === 0) {
+                    d.set(norm);
+                    dist = d.len();
+                }
+                d.scale(1 / dist);
+
+                if (d.dot(norm) >= 0) {
+                    if (dist > ball.r) {
+                        continue;
+                    }
+                    ball.p.add(d, ball.r - dist);
+                } else {
+                    ball.p.add(d, -(ball.r + dist));
                 }
 
-                if (ball.p.x + ball.r > worldSize.width) {
-                    ball.p.x = worldSize.width - ball.r;
-                    ball.v.x = -ball.v.x;
-                }
+                const v = ball.v.dot(d);
+                const vnew = Math.abs(v) * ball.restitution;
 
-                if (ball.p.y - ball.r < 0) {
-                    ball.p.y = ball.r;
-                    ball.v.y = -ball.v.y;
-                }
+                ball.v.add(d, vnew - v);
             }
         }
 
