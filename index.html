@@ -162,27 +162,100 @@
             const h = W(canvas.height);
 
             const x = rand(w - 2*r) + r;
-            const y = h + r;
+            const y = h - r;
 
             return {
                 r: r,
                 p: Vec(x, y),
-                v: Vec(0, 0),
-                restitution: 0.9,
+                v: Vec(1, 0),
+                restitution: 1,
             }
         })();
 
+        // Find the closest point on segment ab to point p.
+        //
+        // c - the closest point on the segment.
+        // norm - the normalized segment
+        //
+        // c = a + t(b - a) for t in [0, 1]
+        // norm = (b - a)/|b - a|
+        // lenAC = (p - a) . norm
+        // lenAB = (b - a) . norm
+        //
+        // Simplifying t:
+        // t = lenAC / lenAB
+        // t = ((p - a) . norm) / ((b - a) . norm)
+        // t = ((p - a) . (b - a)/|b - a|) / ((b - a) . (b - a)/|b - a|)
+        //
+        // Division by a scalar can be pulled out of the dot product:
+        // t = (((p - a) . (b - a)) / |b - a|) / ((b - a) . (b - a) / |b - a|)
+        // And because it appears in both the numerator and denominator, we can cancel it out:
+        // t = (p - a) . (b - a) / (b - a) . (b - a)
+        //
+        // This means we don't have to calculate norm.
         function closestPointOnSegment(p, a, b) {
             const ab = vsub(b, a);
-            let t = ab.dot(ab);
-            if (t === 0) {
+            const lensq = ab.dot(ab); // |b - a|^2
+            if (lensq === 0) {
                 return a.copy();
             }
-            t = clamp((p.dot(ab) - a.dot(ab)) / t, 0, 1);
+            t = clamp((p.dot(ab) - a.dot(ab)) / lensq, 0, 1);
             return Vec(a.x + ab.x * t, a.y + ab.y * t);
         }
 
-        const substeps = 20;
+        function collideBallWithWalls() {
+            // must be defined counter clockwise
+            // A     D
+            // |     |
+            // B-----C
+
+            const A = Vec(0, worldSize.height);
+            const B = Vec(0, 0);
+            const C = Vec(worldSize.width, 0);
+            const D = Vec(worldSize.width, worldSize.height);
+
+            let minD = null; // closest point on segment to the center of the ball.
+            let minDist = Infinity;
+            let closest = null;
+            let norm = null
+
+            const points = [A, B, C, D];
+            for (let i = 0; i < points.length-1; i++) {
+                const a = points[i];
+                const b = points[i+1];
+                const c = closestPointOnSegment(ball.p, a, b);
+                let d = vsub(ball.p, c);
+                const dist = d.len();
+                if (dist < minDist) {
+                    minD = d;
+                    minDist = dist;
+                    closest = c;
+                    norm = vsub(b, a).perp();
+                }
+            }
+
+            if (minDist === 0) {
+                minD.set(norm);
+                minDist = minD.len();
+            }
+            minD.scale(1 / minDist);
+
+            if (minD.dot(norm) >= 0) {
+                if (minDist > ball.r) {
+                    return;
+                }
+                ball.p.add(minD, ball.r - minDist);
+            } else {
+                ball.p.add(minD, -(ball.r + minDist));
+            }
+
+            const v = ball.v.dot(minD);
+            const vnew = Math.abs(v) * ball.restitution;
+
+            ball.v.add(minD, vnew - v);
+        }
+
+        const substeps = 50;
         const g = Vec(0, -9.81); // m/s^2
 
         function simulate(dt) {
@@ -193,37 +266,7 @@
                 const prevP = ball.p.copy();
                 ball.p.add(ball.v, dts);
 
-                // ground: a-----b
-                const a = Vec(0, 0);
-                const b = Vec(worldSize.width, 0);
-
-                // collide ball with ground
-                const ab = vsub(b, a);
-                const norm = ab.perp();
-
-                const c = closestPointOnSegment(ball.p, a, b);
-                const d = vsub(ball.p, c);
-                let dist = d.len();
-
-                if (dist === 0) {
-                    d.set(norm);
-                    dist = d.len();
-                }
-                d.scale(1 / dist);
-
-                if (d.dot(norm) >= 0) {
-                    if (dist > ball.r) {
-                        continue;
-                    }
-                    ball.p.add(d, ball.r - dist);
-                } else {
-                    ball.p.add(d, -(ball.r + dist));
-                }
-
-                const v = ball.v.dot(d);
-                const vnew = Math.abs(v) * ball.restitution;
-
-                ball.v.add(d, vnew - v);
+                collideBallWithWalls();
             }
         }
 
