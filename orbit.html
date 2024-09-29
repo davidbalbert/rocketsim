@@ -31,21 +31,35 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
         class FixedSizeAxesHelper extends THREE.Object3D {
-            constructor(size, camera) {
+            constructor(viewportFraction, camera) {
                 super();
 
-                const axes = new THREE.AxesHelper(size);
-                this.add(axes);
                 this.camera = camera;
-                this.size = size;
+                this.viewportFraction = clamp(viewportFraction, 0, 1);
+
+                const axes = new THREE.AxesHelper(1);
+                this.add(axes);
             }
 
             updateMatrixWorld(force) {
                 super.updateMatrixWorld(force);
-                const dist = this.position.distanceTo(this.camera.position);
-                const scale = dist/this.camera.fov * (2*Math.PI/360) * this.size;
-                this.scale.set(scale, scale, scale);
+
+                const c = this.camera;
+
+                if (c instanceof THREE.PerspectiveCamera) {
+                    const dist = this.position.distanceTo(c.position);
+                    const fov = c.fov * (Math.PI / 180); // in radians
+                    const scale = dist / fov * this.viewportFraction;
+                    this.scale.set(scale, scale, scale);
+                } else if (c instanceof THREE.OrthographicCamera) {
+                    const scale = (c.top-c.bottom) * this.viewportFraction;
+                    this.scale.set(scale, scale, scale);
+                }
             }
         }
 
@@ -87,7 +101,7 @@
         control.zoomSpeed = 2.0;
         control.panSpeed = 0.4;
 
-        const axes = new FixedSizeAxesHelper(50, camera);
+        const axes = new FixedSizeAxesHelper(0.1, camera);
         scene.add(axes);
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
