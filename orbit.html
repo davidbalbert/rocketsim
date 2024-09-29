@@ -137,6 +137,23 @@
         );
         scene.add(moonVelocityArrow);
 
+        const earthPathPoints = [];
+        const earthPathGeometry = new THREE.BufferGeometry();
+        const earthPath = new THREE.Line(
+            earthPathGeometry,
+            new THREE.LineBasicMaterial({color: 0xffff00, linewidth: 3}),
+        );
+        scene.add(earthPath)
+
+        const moonPathPoints = [];
+        const moonPathGeometry = new THREE.BufferGeometry();
+        const moonPath = new THREE.Line(
+            moonPathGeometry,
+            new THREE.LineBasicMaterial({color: 0xffff00, linewidth: 3}),
+        );
+        scene.add(moonPath)
+
+
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -175,6 +192,12 @@
 
             moonVelocityArrow.setDirection(moon.velocity.clone().normalize());
             moonVelocityArrow.position.copy(moon.position);
+
+            moonPathPoints.push(moon.position.clone());
+            moonPathGeometry.setFromPoints(moonPathPoints);
+
+            earthPathPoints.push(earth.position.clone());
+            earthPathGeometry.setFromPoints(earthPathPoints);
 
             earthMesh.position.copy(earth.position);
             moonMesh.position.copy(moon.position);
