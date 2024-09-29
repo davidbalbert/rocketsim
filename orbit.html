@@ -31,6 +31,31 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        const G = 6.67430e-11; // gravitational constant
+        // const scale = 1e-7;    // 1 unit = 10,000 km
+        const scale = 1e-4;
+        const timestep = 3600; // tick the simulation one hour every second
+
+        const dmoon = 384400;  // distance from Earth to Moon in km
+        const vmoon = 1022;    // velocity of Moon in km/s
+        const incmoon = 5.145 * (Math.PI / 180); // inclination of Moon's orbit in radians
+
+        const earth = {
+            mass: 5.972e24, // kg
+            radius: 6371,   // km
+            position: new THREE.Vector3(0, 0, 0),
+            velocity: new THREE.Vector3(0, 0, 0),
+            color: 0x2233ff,
+        };
+
+        const moon = {
+            mass: 7.342e22, // kg
+            radius: 1737,   // km
+            position: new THREE.Vector3(dmoon * Math.cos(incmoon), dmoon * Math.sin(incmoon), 0),
+            velocity: new THREE.Vector3(-vmoon * Math.sin(incmoon), vmoon * Math.cos(incmoon), 0),
+            color: 0xcccccc,
+        };
+
         const scene = new THREE.Scene();
 
         const renderer = new THREE.WebGLRenderer();
@@ -46,28 +71,24 @@
         control.zoomSpeed = 2.0;
         control.panSpeed = 0.4;
 
-        const starGeometry = new THREE.SphereGeometry(1, 32, 32);
-        const starMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
-        const star = new THREE.Mesh(starGeometry, starMaterial);
-        scene.add(star);
-
-        const planetGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const planetMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
-        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
-        scene.add(planet);
-
-        // Add Directional Light
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
         directionalLight.position.set(5, 5, 5);
         scene.add(directionalLight);
 
-        // Add Ambient Light
         const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
         scene.add(ambientLight);
 
-        let angle = 0;
-        const orbitRadius = 5;
-        const orbitSpeed = 0.01;
+        const earthgeo = new THREE.SphereGeometry(earth.radius * scale, 32, 32);
+        const earthmat = new THREE.MeshPhongMaterial({ color: earth.color });
+        const earthmesh = new THREE.Mesh(earthgeo, earthmat);
+        earthmesh.position.copy(earth.position.multiplyScalar(scale));
+        scene.add(earthmesh);
+
+        const moongeo = new THREE.SphereGeometry(moon.radius * scale, 32, 32);
+        const moonmat = new THREE.MeshPhongMaterial({ color: moon.color });
+        const moonmesh = new THREE.Mesh(moongeo, moonmat);
+        moonmesh.position.copy(moon.position.multiplyScalar(scale));
+        scene.add(moonmesh);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -78,10 +99,6 @@
         window.addEventListener('resize', handleResize);
 
         function animate() {
-            angle += orbitSpeed;
-            planet.position.x = Math.cos(angle) * orbitRadius;
-            planet.position.z = Math.sin(angle) * orbitRadius;
-
             renderer.render(scene, camera);
         }
         renderer.setAnimationLoop(animate);
