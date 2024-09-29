@@ -114,17 +114,19 @@
         const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
         scene.add(ambientLight);
 
-        const earthgeo = new THREE.SphereGeometry(earth.radius, 32, 32);
-        const earthmat = new THREE.MeshPhongMaterial({color: earth.color});
-        const earthmesh = new THREE.Mesh(earthgeo, earthmat);
-        earthmesh.position.copy(earth.position);
-        scene.add(earthmesh);
+        function planetMesh(planet) {
+            const geo = new THREE.SphereGeometry(planet.radius, 32, 32);
+            const mat = new THREE.MeshPhongMaterial({color: planet.color});
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.copy(planet.position);
+            return mesh;
+        }
 
-        const moongeo = new THREE.SphereGeometry(moon.radius, 32, 32);
-        const moonmat = new THREE.MeshPhongMaterial({color: moon.color});
-        const moonmesh = new THREE.Mesh(moongeo, moonmat);
-        moonmesh.position.copy(moon.position);
-        scene.add(moonmesh);
+        const earthMesh = planetMesh(earth);
+        const moonMesh = planetMesh(moon);
+
+        scene.add(earthMesh);
+        scene.add(moonMesh);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
