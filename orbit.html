@@ -32,8 +32,6 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         const G = 6.67430e-11; // gravitational constant
-        // const scale = 1e-7;    // 1 unit = 10,000 km
-        const scale = 1e-4;
         const timestep = 3600; // tick the simulation one hour every second
 
         const dmoon = 384400;  // distance from Earth to Moon in km
@@ -61,10 +59,10 @@
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild( renderer.domElement );
+        document.body.appendChild(renderer.domElement);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 3, 10);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
+        camera.position.set(0, 0, dmoon * 2); // make both earth and moon visible
         camera.updateMatrixWorld();
 
         const control = new OrbitControls(camera, renderer.domElement);
@@ -78,16 +76,16 @@
         const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
         scene.add(ambientLight);
 
-        const earthgeo = new THREE.SphereGeometry(earth.radius * scale, 32, 32);
+        const earthgeo = new THREE.SphereGeometry(earth.radius, 32, 32);
         const earthmat = new THREE.MeshPhongMaterial({ color: earth.color });
         const earthmesh = new THREE.Mesh(earthgeo, earthmat);
-        earthmesh.position.copy(earth.position.multiplyScalar(scale));
+        earthmesh.position.copy(earth.position);
         scene.add(earthmesh);
 
-        const moongeo = new THREE.SphereGeometry(moon.radius * scale, 32, 32);
+        const moongeo = new THREE.SphereGeometry(moon.radius, 32, 32);
         const moonmat = new THREE.MeshPhongMaterial({ color: moon.color });
         const moonmesh = new THREE.Mesh(moongeo, moonmat);
-        moonmesh.position.copy(moon.position.multiplyScalar(scale));
+        moonmesh.position.copy(moon.position);
         scene.add(moonmesh);
 
         function handleResize() {
