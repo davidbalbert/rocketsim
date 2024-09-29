@@ -63,7 +63,7 @@
             }
         }
 
-        const G = 6.67430e-11; // gravitational constant
+        const G = 6.67430e-20; // gravitational constant, in km
         const timestep = 3600; // tick the simulation one hour every second
 
         const dmoon = 384400;  // distance from Earth to Moon in km
@@ -128,6 +128,11 @@
         scene.add(earthMesh);
         scene.add(moonMesh);
 
+        const moonVelocity = new Three.ArrowHelper(
+            moon.velocity.clone().normalize(),
+            moon.position,
+        );
+
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -136,7 +141,31 @@
         }
         window.addEventListener('resize', handleResize);
 
+        function simulate(dt) {
+            const r = moon.position.clone().sub(earth.position);
+            const fmag = G * earth.mass * moon.mass / r.lengthSq();
+            const f = r.clone().normalize().multiplyScalar(fmag);
+
+            const ma = f.clone().divideScalar(moon.mass);
+            moon.velocity.add(ma.multiplyScalar(dt));
+            moon.position.add(moon.velocity.clone().multiplyScalar(dt));
+
+            const ea = f.clone().divideScalar(earth.mass).negate();
+            earth.velocity.add(ea.multiplyScalar(dt));
+            earth.position.add(earth.velocity.clone().multiplyScalar(dt));
+        }
+
+        const clock = new THREE.Clock();
         function animate() {
+            const dt = clock.getDelta();
+            // don't simulate on the first frame, don't simulate if the browser throttled
+            // requestAnimationFrame because we were in a background tab.
+            if (0 < dt && dt < 0.1) {
+                simulate(dt);
+            }
+
+            earthMesh.position.copy(earth.position);
+            moonMesh.position.copy(moon.position);
             renderer.render(scene, camera);
         }
         renderer.setAnimationLoop(animate);
