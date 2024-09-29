@@ -63,11 +63,12 @@
             }
         }
 
-        const G = 6.67430e-20; // gravitational constant, in km
-        const timestep = 3600; // tick the simulation one hour every second
+        const timescale = 3600; // tick the simulation one hour every second
+        const substeps = 1000;
 
+        const G = 6.67430e-20;  // gravitational constant, in km
         const dmoon = 384400;  // distance from Earth to Moon in km
-        const vmoon = 1022;    // velocity of Moon in km/s
+        const vmoon = 1.022;    // velocity of Moon in km/s
         const incmoon = 5.145 * (Math.PI / 180); // inclination of Moon's orbit in radians
 
         const earth = {
@@ -95,7 +96,7 @@
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
         const cameraDist = dmoon*2; // make earth and moon visible
-        const cameraPos = new THREE.Vector3(1, 0.5, 1).normalize().multiplyScalar(cameraDist);
+        const cameraPos = new THREE.Vector3(0, 0, 1).normalize().multiplyScalar(cameraDist);
         camera.position.copy(cameraPos);
         camera.lookAt(0, 0, 0);
         camera.updateMatrixWorld();
@@ -128,10 +129,13 @@
         scene.add(earthMesh);
         scene.add(moonMesh);
 
-        const moonVelocity = new Three.ArrowHelper(
+        const moonVelocityArrow = new THREE.ArrowHelper(
             moon.velocity.clone().normalize(),
             moon.position,
+            100000,
+            0xff0000,
         );
+        scene.add(moonVelocityArrow);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -142,17 +146,22 @@
         window.addEventListener('resize', handleResize);
 
         function simulate(dt) {
-            const r = moon.position.clone().sub(earth.position);
-            const fmag = G * earth.mass * moon.mass / r.lengthSq();
-            const f = r.clone().normalize().multiplyScalar(fmag);
+            dt *= timescale;
+            const dts = dt / substeps;
 
-            const ma = f.clone().divideScalar(moon.mass);
-            moon.velocity.add(ma.multiplyScalar(dt));
-            moon.position.add(moon.velocity.clone().multiplyScalar(dt));
+            for (let i = 0; i < substeps; i++) {
+                const r = new THREE.Vector3().subVectors(moon.position, earth.position);
+                const fmag = G * earth.mass * moon.mass / r.lengthSq();
+                const f = r.clone().normalize().multiplyScalar(fmag);
 
-            const ea = f.clone().divideScalar(earth.mass).negate();
-            earth.velocity.add(ea.multiplyScalar(dt));
-            earth.position.add(earth.velocity.clone().multiplyScalar(dt));
+                const ma = f.clone().divideScalar(moon.mass).negate();
+                moon.velocity.add(ma.multiplyScalar(dts));
+                moon.position.add(moon.velocity.clone().multiplyScalar(dts));
+
+                const ea = f.clone().divideScalar(earth.mass);
+                earth.velocity.add(ea.multiplyScalar(dts));
+                earth.position.add(earth.velocity.clone().multiplyScalar(dts));
+            }
         }
 
         const clock = new THREE.Clock();
@@ -163,6 +172,9 @@
             if (0 < dt && dt < 0.1) {
                 simulate(dt);
             }
+
+            moonVelocityArrow.setDirection(moon.velocity.clone().normalize());
+            moonVelocityArrow.position.copy(moon.position);
 
             earthMesh.position.copy(earth.position);
             moonMesh.position.copy(moon.position);
