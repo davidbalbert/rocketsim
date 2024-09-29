@@ -82,8 +82,8 @@
         const moon = {
             mass: 7.342e22, // kg
             radius: 1737,   // km
-            position: new THREE.Vector3(dmoon * Math.cos(incmoon), dmoon * Math.sin(incmoon), 0),
-            velocity: new THREE.Vector3(-vmoon * Math.sin(incmoon), vmoon * Math.cos(incmoon), 0),
+            position: new THREE.Vector3(dmoon * Math.cos(incmoon), 0, dmoon * Math.sin(incmoon)),
+            velocity: new THREE.Vector3(0, vmoon * Math.cos(incmoon), -vmoon * Math.sin(incmoon)),
             color: 0xcccccc,
         };
 
