@@ -145,15 +145,6 @@
         scene.add(earthMesh);
         scene.add(moonMesh);
 
-        const moonVelocityArrow = new THREE.ArrowHelper(
-            moon.velocity.clone().normalize(),
-            moon.position,
-            100000,
-            0xff0000,
-        );
-        scene.add(moonVelocityArrow);
-
-
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -189,9 +180,6 @@
             if (0 < dt && dt < 0.1) {
                 simulate(dt);
             }
-
-            moonVelocityArrow.setDirection(moon.velocity.clone().normalize());
-            moonVelocityArrow.position.copy(moon.position);
 
             moonPathPoints.push(moon.position.clone());
             moonPathGeometry.setFromPoints(moonPathPoints);
