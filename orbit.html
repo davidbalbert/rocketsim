@@ -94,7 +94,10 @@
         document.body.appendChild(renderer.domElement);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
-        camera.position.set(0, 0, dmoon * 2); // make both earth and moon visible
+        const cameraDist = dmoon*2; // make earth and moon visible
+        const cameraPos = new THREE.Vector3(1, 0.5, 1).normalize().multiplyScalar(cameraDist);
+        camera.position.copy(cameraPos);
+        camera.lookAt(0, 0, 0);
         camera.updateMatrixWorld();
 
         const control = new OrbitControls(camera, renderer.domElement);
