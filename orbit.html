@@ -31,6 +31,24 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        class FixedSizeAxesHelper extends THREE.Object3D {
+            constructor(size, camera) {
+                super();
+
+                const axes = new THREE.AxesHelper(size);
+                this.add(axes);
+                this.camera = camera;
+                this.size = size;
+            }
+
+            updateMatrixWorld(force) {
+                super.updateMatrixWorld(force);
+                const dist = this.position.distanceTo(this.camera.position);
+                const scale = dist/this.camera.fov * (2*Math.PI/360) * this.size;
+                this.scale.set(scale, scale, scale);
+            }
+        }
+
         const G = 6.67430e-11; // gravitational constant
         const timestep = 3600; // tick the simulation one hour every second
 
@@ -69,6 +87,9 @@
         control.zoomSpeed = 2.0;
         control.panSpeed = 0.4;
 
+        const axes = new FixedSizeAxesHelper(50, camera);
+        scene.add(axes);
+
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
         directionalLight.position.set(5, 5, 5);
         scene.add(directionalLight);
@@ -77,13 +98,13 @@
         scene.add(ambientLight);
 
         const earthgeo = new THREE.SphereGeometry(earth.radius, 32, 32);
-        const earthmat = new THREE.MeshPhongMaterial({ color: earth.color });
+        const earthmat = new THREE.MeshPhongMaterial({color: earth.color});
         const earthmesh = new THREE.Mesh(earthgeo, earthmat);
         earthmesh.position.copy(earth.position);
         scene.add(earthmesh);
 
         const moongeo = new THREE.SphereGeometry(moon.radius, 32, 32);
-        const moonmat = new THREE.MeshPhongMaterial({ color: moon.color });
+        const moonmat = new THREE.MeshPhongMaterial({color: moon.color});
         const moonmesh = new THREE.Mesh(moongeo, moonmat);
         moonmesh.position.copy(moon.position);
         scene.add(moonmesh);
