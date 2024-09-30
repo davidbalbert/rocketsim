@@ -30,6 +30,9 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Line2 } from 'three/addons/lines/Line2.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
+        import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 
         function clamp(value, min, max) {
             return Math.min(Math.max(value, min), max);
@@ -38,7 +41,7 @@
         class FixedSizeAxesHelper extends THREE.Object3D {
             constructor(viewportFraction, camera) {
                 super();
-
+                
                 this.camera = camera;
                 this.viewportFraction = clamp(viewportFraction, 0, 1);
 
@@ -89,7 +92,7 @@
 
         const scene = new THREE.Scene();
 
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
@@ -116,18 +119,16 @@
         scene.add(ambientLight);
 
         const earthPathPoints = [];
-        const earthPathGeometry = new THREE.BufferGeometry();
-        const earthPath = new THREE.Line(
-            earthPathGeometry,
-            new THREE.LineBasicMaterial({color: 0xffff00, linewidth: 3}),
+        const earthPath = new Line2(
+            new LineGeometry(),
+            new LineMaterial({color: 0xffff00, linewidth: 3}),
         );
         scene.add(earthPath)
 
         const moonPathPoints = [];
-        const moonPathGeometry = new THREE.BufferGeometry();
-        const moonPath = new THREE.Line(
-            moonPathGeometry,
-            new THREE.LineBasicMaterial({color: 0xffff00, linewidth: 3}),
+        const moonPath = new Line2(
+            new LineGeometry(),
+            new LineMaterial({color: 0xffff00, linewidth: 1}),
         );
         scene.add(moonPath)
 
@@ -181,11 +182,13 @@
                 simulate(dt);
             }
 
-            moonPathPoints.push(moon.position.clone());
-            moonPathGeometry.setFromPoints(moonPathPoints);
+            moonPathPoints.push(moon.position.x, moon.position.y, moon.position.z);
+            moonPath.geometry = new LineGeometry();
+            moonPath.geometry.setPositions(moonPathPoints);
 
-            earthPathPoints.push(earth.position.clone());
-            earthPathGeometry.setFromPoints(earthPathPoints);
+            earthPathPoints.push(earth.position.x, earth.position.y, earth.position.z);
+            earthPath.geometry = new LineGeometry();
+            earthPath.geometry.setPositions(earthPathPoints);
 
             earthMesh.position.copy(earth.position);
             moonMesh.position.copy(moon.position);
