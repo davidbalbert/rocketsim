@@ -34,38 +34,6 @@
         import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
         import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
-        }
-
-        class FixedSizeAxesHelper extends THREE.Object3D {
-            constructor(viewportFraction, camera) {
-                super();
-                
-                this.camera = camera;
-                this.viewportFraction = clamp(viewportFraction, 0, 1);
-
-                const axes = new THREE.AxesHelper(1);
-                this.add(axes);
-            }
-
-            updateMatrixWorld(force) {
-                super.updateMatrixWorld(force);
-
-                const c = this.camera;
-
-                if (c instanceof THREE.PerspectiveCamera) {
-                    const dist = this.position.distanceTo(c.position);
-                    const fov = c.fov * (Math.PI / 180); // in radians
-                    const scale = dist / fov * this.viewportFraction;
-                    this.scale.set(scale, scale, scale);
-                } else if (c instanceof THREE.OrthographicCamera) {
-                    const scale = (c.top-c.bottom) * this.viewportFraction;
-                    this.scale.set(scale, scale, scale);
-                }
-            }
-        }
-
         const timescale = 3600*4; // tick the simulation four hour every second
         const substeps = 1000;
 
@@ -96,11 +64,9 @@
         renderer.autoClear = false;
         document.body.appendChild(renderer.domElement);
 
-        const cameraDir = new THREE.Vector3(0.5, 0.5, 1).normalize();
-
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000000);
         const cameraDist = dmoon*2; // make earth and moon visible
-        const cameraPos = cameraDir.clone().multiplyScalar(cameraDist);
+        const cameraPos = new THREE.Vector3(0, 0, 1).normalize().multiplyScalar(cameraDist);
         camera.position.copy(cameraPos);
         camera.lookAt(0, 0, 0);
         camera.updateMatrixWorld();
@@ -146,13 +112,11 @@
 
         const axesScene = new THREE.Scene();
         const axesCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-        const axesCameraPos = cameraDir.clone().multiplyScalar(40);
         axesCamera.position.set(0, 0, 50);
         axesCamera.lookAt(0, 0, 0);
 
         const axes = new THREE.AxesHelper(10);
         axesScene.add(axes);
-        
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
