@@ -110,13 +110,60 @@
         scene.add(earthMesh);
         scene.add(moonMesh);
 
+
+        // axes helper
+
+        function createTextSprite(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            context.font = 'Bold 32px Arial';
+            context.fillStyle = 'white';
+            context.fillText(text, 16, 40);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            // sprite.scale.set(0.5, 0.5, 1);
+            sprite.scale.set(10, 10, 1);
+            return sprite;
+        }
+
         const axesScene = new THREE.Scene();
         const axesCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
         axesCamera.position.set(0, 0, 50);
         axesCamera.lookAt(0, 0, 0);
 
+        const axesLength = 10;
         const axes = new THREE.AxesHelper(10);
         axesScene.add(axes);
+
+        const xLabel = createTextSprite('X');
+        const yLabel = createTextSprite('Y');
+        const zLabel = createTextSprite('Z');
+
+        axesScene.add(xLabel);
+        axesScene.add(yLabel);
+        axesScene.add(zLabel);
+
+        function updateAxesLabels(rotation) {
+            const axisEnd = new THREE.Vector3(axesLength, 0, 0);
+            axisEnd.applyQuaternion(rotation);
+            xLabel.position.copy(axisEnd);
+            
+            axisEnd.set(0, axesLength, 0);
+            axisEnd.applyQuaternion(rotation);
+            yLabel.position.copy(axisEnd);
+            
+            axisEnd.set(0, 0, axesLength);
+            axisEnd.applyQuaternion(rotation);
+            zLabel.position.copy(axisEnd);
+
+            xLabel.quaternion.copy(axesCamera.quaternion);
+            yLabel.quaternion.copy(axesCamera.quaternion);
+            zLabel.quaternion.copy(axesCamera.quaternion);
+        }
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -168,7 +215,10 @@
             renderer.clear();
             renderer.render(scene, camera);
 
-            axes.quaternion.setFromRotationMatrix(camera.matrixWorldInverse);
+            const rotation = new THREE.Quaternion().setFromRotationMatrix(camera.matrixWorldInverse);
+            axes.quaternion.copy(rotation);
+            updateAxesLabels(rotation);
+
             renderer.setViewport(0, 0, 200, 200);
             renderer.render(axesScene, axesCamera);
             renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
