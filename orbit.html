@@ -93,11 +93,9 @@
         const scene = new THREE.Scene();
 
         const renderer = new THREE.WebGLRenderer({antialias: true});
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000000);
         const cameraDist = dmoon*2; // make earth and moon visible
         const cameraPos = new THREE.Vector3(0, 0, 1).normalize().multiplyScalar(cameraDist);
         camera.position.copy(cameraPos);
@@ -195,6 +193,7 @@
             renderer.render(scene, camera);
         }
         renderer.setAnimationLoop(animate);
+        handleResize();
     </script>
 </body>
 </html>
