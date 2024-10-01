@@ -46,12 +46,12 @@
         const renderer = new THREE.WebGLRenderer();
         document.body.appendChild(renderer.domElement);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000000);
-        const cameraDist = earth.radius * 4;
-        const cameraPos = new THREE.Vector3(0, 0, 1).normalize().multiplyScalar(cameraDist);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100000000);
+        const cameraDist = earth.radius * 7;
+        const cameraPos = new THREE.Vector3(1, 0, 1).normalize().multiplyScalar(cameraDist);
         camera.position.copy(cameraPos);
         camera.lookAt(0, 0, 0);
-        camera.updateMatrixWorld();
+        camera.updateProjectionMatrix();
 
         const control = new OrbitControls(camera, renderer.domElement);
         control.zoomSpeed = 2.0;
@@ -63,25 +63,6 @@
 
         const ambientLight = new THREE.AmbientLight(0x404040);
         scene.add(ambientLight);
-
-        function createEarthMesh(planet) {
-            const geometry = new THREE.SphereGeometry(planet.radius, 64, 64);
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x1a3f5c,  // Darker blue color
-                transparent: true,
-                opacity: 0.8,
-                shininess: 10,
-                polygonOffset: true,
-                polygonOffsetFactor: 1,
-                polygonOffsetUnits: 3,
-            });
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.copy(planet.position);
-            return mesh;
-        }
-
-        const earthMesh = createEarthMesh(earth);
-        scene.add(earthMesh);
 
         function latLonToVec(lat, lon, radius) {
             const phi = (90 - lat) * (Math.PI / 180);
@@ -96,21 +77,59 @@
             );
         }
 
-        // https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_coastline.geojson
-        const loader = new THREE.FileLoader();
-        loader.load('continents.geojson', (data) => {
-            const geojson = JSON.parse(data);
-            const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
-            geojson.features.forEach((feature) => {
-                const geometry = new THREE.BufferGeometry().setFromPoints(
-                    feature.geometry.coordinates.map(coord =>
-                        latLonToVec(coord[1], coord[0], earth.radius)
-                    )
-                );
-                const line = new THREE.Line(geometry, material);
-                earthMesh.add(line);
+        function createEarth() {
+            const geometry = new THREE.SphereGeometry(earth.radius, 64, 64);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x1a3f5c,  // Darker blue color
+                transparent: true,
+                opacity: 0.8,
+                shininess: 10,
+                polygonOffset: true,
+                polygonOffsetFactor: 1,
+                polygonOffsetUnits: 3,
             });
-        });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(earth.position);
+
+            // https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_coastline.geojson
+            const loader = new THREE.FileLoader();
+            loader.load('continents.geojson', (data) => {
+                const geojson = JSON.parse(data);
+                const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
+                geojson.features.forEach((feature) => {
+                    const geometry = new THREE.BufferGeometry().setFromPoints(
+                        feature.geometry.coordinates.map(coord =>
+                            latLonToVec(coord[1], coord[0], earth.radius)
+                        )
+                    );
+                    const line = new THREE.Line(geometry, material);
+                    mesh.add(line);
+                });
+            });
+
+            scene.add(mesh);
+        }
+        function createAxes() {
+            const size = earth.radius * 3;
+            const divisions = 10;
+
+            const gridx = new THREE.GridHelper(size, divisions, 0xaaaaaaa, 0xaaaaaaa);
+            gridx.rotation.z = Math.PI / 2;
+            gridx.position.set(-size/2, 0, 0);
+            scene.add(gridx);
+
+            const gridy = new THREE.GridHelper(size, divisions, 0xaaaaaaa, 0xaaaaaaa);
+            gridy.position.set(0, -size/2, 0);
+            scene.add(gridy);
+
+            const gridz = new THREE.GridHelper(size, divisions, 0xaaaaaaa, 0xaaaaaaa);
+            gridz.rotation.x = Math.PI / 2;
+            gridz.position.set(0, 0, -size / 2);
+            scene.add(gridz);
+        }
+
+        createEarth();
+        createAxes();
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
