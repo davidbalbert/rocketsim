@@ -46,9 +46,9 @@
         const renderer = new THREE.WebGLRenderer();
         document.body.appendChild(renderer.domElement);
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100000000);
-        const cameraDist = earth.radius * 7;
-        const cameraPos = new THREE.Vector3(1, 0, 1).normalize().multiplyScalar(cameraDist);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000000);
+        const cameraDist = earth.radius * 5;
+        const cameraPos = new THREE.Vector3(1, 0.5, 1).normalize().multiplyScalar(cameraDist);
         camera.position.copy(cameraPos);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
