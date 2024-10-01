@@ -70,7 +70,10 @@
                 color: 0x1a3f5c,  // Darker blue color
                 transparent: true,
                 opacity: 0.8,
-                shininess: 10
+                shininess: 10,
+                polygonOffset: true,
+                polygonOffsetFactor: 1,
+                polygonOffsetUnits: 3,
             });
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.copy(planet.position);
@@ -101,7 +104,7 @@
             geojson.features.forEach((feature) => {
                 const geometry = new THREE.BufferGeometry().setFromPoints(
                     feature.geometry.coordinates.map(coord =>
-                        latLonToVec(coord[1], coord[0], earth.radius * 1.005)
+                        latLonToVec(coord[1], coord[0], earth.radius)
                     )
                 );
                 const line = new THREE.Line(geometry, material);
