@@ -14,6 +14,18 @@
             width: 100vw;
             height: 100vh;
         }
+
+        #clock {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
     </style>
 
     <script type="importmap">
@@ -27,12 +39,14 @@
   
 </head>
 <body>
+    <div id="clock">00:00:00</div>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         const sin = Math.sin;
         const cos = Math.cos;
+        const PI = Math.PI;
 
         function rad(degrees) {
             return degrees * Math.PI / 180;
@@ -46,6 +60,7 @@
             tilt: rad(23.44),
             position: new THREE.Vector3(0, 0, 0),
             velocity: new THREE.Vector3(0, 0, 0),
+            rotationalVelocity: 2*PI/86164.1, // rad/s. denominator is seconds in a sidereal day
             color: 0x2233ff,
         };
 
@@ -126,9 +141,10 @@
                 });
             });
 
-            scene.add(mesh);
+            return mesh;
         }
-        createEarth();
+        const earthMesh = createEarth();
+        scene.add(earthMesh);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -138,7 +154,18 @@
         }
         window.addEventListener('resize', handleResize);
 
+        let elapsedTime = 0;
+        function updateClock(dt) {
+            elapsedTime += dt;
+            const hours = Math.floor(elapsedTime / 3600);
+            const minutes = Math.floor((elapsedTime % 3600) / 60);
+            const seconds = Math.floor(elapsedTime % 60);
+            const text = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('clock').textContent = text;
+        }
+
         function simulate(dt) {
+            earthMesh.rotation.y += earth.rotationalVelocity * dt;
         }
 
         const clock = new THREE.Clock();
@@ -147,6 +174,7 @@
             // don't simulate on the first frame, don't simulate if the browser throttled
             // requestAnimationFrame because we were in a background tab.
             if (0 < dt && dt < 0.1) {
+                updateClock(dt);
                 simulate(dt);
             }
             renderer.render(scene, camera);
