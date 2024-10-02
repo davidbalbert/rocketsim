@@ -21,21 +21,23 @@
             left: 10px;
             color: white;
             font-family: Helvetica, Arial, sans-serif;
-            background-color: rgba(0, 0, 0, 0.5);
         }
 
         #clock {
             font-size: 16px;
             padding: 5px 10px;
             border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
         }
 
         #time-control {
+            margin-top: 5px;
             padding: 10px;
             border-radius: 5px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            background-color: rgba(0, 0, 0, 0.5);
         }
 
         #time-control label {
@@ -69,7 +71,7 @@
     <div id="controls">
         <div id="clock">00:00:00</div>
         <div id="time-control">
-            <label for="time-scale">Time Scale:</label>
+            <label for="time-scale">Speed</label>
             <input type="range" id="time-scale" min="0" max="4" step="0.1" value="0">
             <div id="time-scale-value">1x</div>
         </div>
@@ -151,8 +153,6 @@
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.copy(earth.position);
 
-            mesh.rotation.z = -earth.tilt;
-
             // axis of rotation
             const axisMaterial = new THREE.LineBasicMaterial({color: 0x555555});
             const axisGeometry = new THREE.BufferGeometry().setFromPoints([
@@ -178,10 +178,14 @@
                 });
             });
 
-            return mesh;
+            const container = new THREE.Object3D();
+            container.add(mesh);
+            container.rotation.z = -earth.tilt;
+
+            return [mesh, container];
         }
-        const earthMesh = createEarth();
-        scene.add(earthMesh);
+        const [earthMesh, earthContainer] = createEarth();
+        scene.add(earthContainer);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
