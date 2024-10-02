@@ -15,16 +15,43 @@
             height: 100vh;
         }
 
-        #clock {
+        #controls {
             position: absolute;
             top: 10px;
             left: 10px;
             color: white;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
+            font-family: Helvetica, Arial, sans-serif;
             background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        #clock {
+            font-size: 16px;
             padding: 5px 10px;
             border-radius: 5px;
+        }
+
+        #time-control {
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #time-control label {
+            color: white;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        #time-scale {
+            width: 200px;
+        }
+
+        #time-scale-value {
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
         }
     </style>
 
@@ -39,7 +66,14 @@
   
 </head>
 <body>
-    <div id="clock">00:00:00</div>
+    <div id="controls">
+        <div id="clock">00:00:00</div>
+        <div id="time-control">
+            <label for="time-scale">Time Scale:</label>
+            <input type="range" id="time-scale" min="0" max="4" step="0.1" value="0">
+            <div id="time-scale-value">1x</div>
+        </div>
+    </div>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -51,6 +85,9 @@
         function rad(degrees) {
             return degrees * Math.PI / 180;
         }
+
+        let elapsedTime = 0;
+        let timeScale = 1;
 
         const G = 6.67430e-20;  // gravitational constant, in km
 
@@ -154,7 +191,15 @@
         }
         window.addEventListener('resize', handleResize);
 
-        let elapsedTime = 0;
+        const timeScaleSlider = document.getElementById('time-scale');
+        const timeScaleValue = document.getElementById('time-scale-value');
+
+        timeScaleSlider.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            timeScale = Math.pow(10, value);
+            timeScaleValue.textContent = timeScale.toFixed(2) + 'x';
+        });
+
         function updateClock(dt) {
             elapsedTime += dt;
             const hours = Math.floor(elapsedTime / 3600);
@@ -174,8 +219,9 @@
             // don't simulate on the first frame, don't simulate if the browser throttled
             // requestAnimationFrame because we were in a background tab.
             if (0 < dt && dt < 0.1) {
-                updateClock(dt);
-                simulate(dt);
+                const scaled = dt * timeScale;
+                updateClock(scaled);
+                simulate(scaled);
             }
             renderer.render(scene, camera);
 
