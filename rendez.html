@@ -69,7 +69,7 @@
 </head>
 <body>
     <div id="controls">
-        <div id="clock">00:00:00</div>
+        <div id="clock">00:00:00:00</div>
         <div id="time-control">
             <label for="time-scale">Speed</label>
             <input type="range" id="time-scale" min="0" max="4" step="0.1" value="0">
@@ -206,10 +206,11 @@
 
         function updateClock(dt) {
             elapsedTime += dt;
-            const hours = Math.floor(elapsedTime / 3600);
+            const days = Math.floor(elapsedTime / 86400);
+            const hours = Math.floor((elapsedTime % 86400) / 3600);
             const minutes = Math.floor((elapsedTime % 3600) / 60);
             const seconds = Math.floor(elapsedTime % 60);
-            const text = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const text = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             document.getElementById('clock').textContent = text;
         }
 
