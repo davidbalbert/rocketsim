@@ -31,11 +31,19 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        const sin = Math.sin;
+        const cos = Math.cos;
+
+        function rad(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
         const G = 6.67430e-20;  // gravitational constant, in km
 
         const earth = {
             mass: 5.972e24, // kg
             radius: 6371,   // km
+            tilt: rad(23.44),
             position: new THREE.Vector3(0, 0, 0),
             velocity: new THREE.Vector3(0, 0, 0),
             color: 0x2233ff,
@@ -47,8 +55,8 @@
         document.body.appendChild(renderer.domElement);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000000);
-        const cameraDist = earth.radius * 5;
-        const cameraPos = new THREE.Vector3(1, 0.5, 1).normalize().multiplyScalar(cameraDist);
+        const cameraDist = earth.radius * 4;
+        const cameraPos = new THREE.Vector3(0, 0, 1).normalize().multiplyScalar(cameraDist);
         camera.position.copy(cameraPos);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
@@ -58,22 +66,22 @@
         control.panSpeed = 0.4;
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-        directionalLight.position.set(5, 5, 5);
+        directionalLight.position.set(sin(rad(60)), 0, cos(rad(60)));
         scene.add(directionalLight);
 
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
         function latLonToVec(lat, lon, radius) {
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lon + 180) * (Math.PI / 180);
+            const phi = rad(90 - lat)
+            const theta = rad(lon + 180)
 
             const r = radius
 
             return new THREE.Vector3(
-                -r * Math.sin(phi) * Math.cos(theta),
-                r * Math.cos(phi),
-                r * Math.sin(phi) * Math.sin(theta)
+                -r * sin(phi) * cos(theta),
+                r * cos(phi),
+                r * sin(phi) * sin(theta)
             );
         }
 
@@ -90,6 +98,17 @@
             });
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.copy(earth.position);
+
+            mesh.rotation.z = -earth.tilt;
+
+            // axis of rotation
+            const axisMaterial = new THREE.LineBasicMaterial({color: 0x555555});
+            const axisGeometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, earth.radius*1.4, 0),
+                new THREE.Vector3(0, -earth.radius*1.4, 0)
+            ]);
+            const axisLine = new THREE.Line(axisGeometry, axisMaterial);
+            mesh.add(axisLine);
 
             // https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_coastline.geojson
             const loader = new THREE.FileLoader();
@@ -109,27 +128,7 @@
 
             scene.add(mesh);
         }
-        function createAxes() {
-            const size = earth.radius * 3;
-            const divisions = 10;
-
-            const gridx = new THREE.GridHelper(size, divisions, 0xaaaaaaa, 0xaaaaaaa);
-            gridx.rotation.z = Math.PI / 2;
-            gridx.position.set(-size/2, 0, 0);
-            scene.add(gridx);
-
-            const gridy = new THREE.GridHelper(size, divisions, 0xaaaaaaa, 0xaaaaaaa);
-            gridy.position.set(0, -size/2, 0);
-            scene.add(gridy);
-
-            const gridz = new THREE.GridHelper(size, divisions, 0xaaaaaaa, 0xaaaaaaa);
-            gridz.rotation.x = Math.PI / 2;
-            gridz.position.set(0, 0, -size / 2);
-            scene.add(gridz);
-        }
-
         createEarth();
-        createAxes();
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
