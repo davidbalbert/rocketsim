@@ -261,22 +261,105 @@
             spacecraftMesh.scale.set(scale, scale, scale);
         }
 
-        const steps = 1000;
-        function simulate(dt) {
-            earth.rotation += earth.rotationalVelocity * dt;
+        function vdup(v) {
+            return [...v];
+        }
 
-            const r = spacecraft.position.clone().sub(earth.position);
-            const mu = G * earth.mass;
-            const a = r.clone().normalize().multiplyScalar(-mu / r.lengthSq());
+        function vadd(a, b, bscale) {
+            for (let i = 0; i < a.length; i++) {
+                a[i] += b[i] * bscale;
+            }
+            return a;
+        }
+
+        function vmul(v, scalar) {
+            for (let i = 0; i < v.length; i++) {
+                v[i] *= scalar;
+            }
+            return v;
+        }
+
+        function vdiv(v, scalar) {
+            for (let i = 0; i < v.length; i++) {
+                v[i] /= scalar;
+            }
+            return v;
+        }
+
+        function vmag(v) {
+            let mag = 0;
+            for (let i = 0; i < v.length; i++) {
+                mag += v[i] * v[i];
+            }
+            return Math.sqrt(mag);
+        }
+
+        function vsum(...vs) {
+            const sum = new Array(vs[0].length).fill(0);
+            for (let i = 0; i < sum.length; i++) {
+                for (let j = 0; j < vs.length; j++) {
+                    sum[i] += vs[j][i];
+                }
+            }
+            return sum;
+        }
+
+
+        // f returns the derivative of the state at time t
+        function rk4(f, t, y, h) {
+            const k1 = f(t, y);
+            const k2 = f(t + h/2, vadd(vdup(y), k1, h/2));
+            const k3 = f(t + h/2, vadd(vdup(y), k2, h/2));
+            const k4 = f(t + h, vadd(vdup(y), k3, h));
+            
+            // y = yprev + h/6*(k1 + 2*k2 + 2*k3 + k4)
+            vmul(k1, h/6);
+            vmul(k2, h/3);
+            vmul(k3, h/3);
+            vmul(k4, h/6);
+
+            return vsum(y, k1, k2, k3, k4);
+        }
+
+        // state = [x, y, z, vx, vy, vz, mu]
+        function twobody(t, state) {
+            const r = state.slice(0, 3);
+            const mu = state[6];
+
+            // a = aMag * rHat
+            // a = -mu/|r|^2 * r/|r|
+            // a = -mu * r / |r|^3
+            const rMag = vmag(r);
+            const a = vdiv(vmul(r, -mu), (rMag * rMag * rMag));
+
+            return [
+                state[3], state[4], state[5],
+                a[0], a[1], a[2],
+                0, // mu is constant
+            ];
+        }
+
+        const steps = 1000;
+        function simulate(t, dt) {
+            const r = spacecraft.position;
+            const v = spacecraft.velocity;
+
+            spacecraftPositions.push(r.clone());
+
+            let state = [
+                r.x, r.y, r.z,
+                v.x, v.y, v.z,
+                G * earth.mass,
+            ];
 
             const dts = dt / steps;
-            const adts = a.clone().multiplyScalar(dts);
-
             for (let i = 0; i < steps; i++) {
-                spacecraft.velocity.add(adts);
-                spacecraft.position.add(spacecraft.velocity.clone().multiplyScalar(dts));
+                earth.rotation += earth.rotationalVelocity * dts;
+                state = rk4(twobody, t, state, dts);
             }
-            spacecraftPositions.push(spacecraft.position.clone());
+            earth.rotation = (earth.rotation + 2*PI) % (2*PI);
+            spacecraft.position.fromArray(state, 0);
+            spacecraft.velocity.fromArray(state, 3);
         }
 
         const clock = new THREE.Clock();
@@ -288,7 +371,7 @@
                 const scaled = dt * timeScale;
                 updateClock(scaled);
                 updateSpacecraftSize();
-                simulate(scaled);
+                simulate(clock.oldTime, scaled);
             }
 
             earthMesh.rotation.y = earth.rotation;
