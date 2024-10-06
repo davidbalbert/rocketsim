@@ -221,6 +221,12 @@
         const spacecraftMesh = makeSpacecraftMesh();
         scene.add(spacecraftMesh);
 
+        const spacecraftPositions = [];
+        const spacecraftPath = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(spacecraftPositions),
+            new THREE.LineBasicMaterial({color: spacecraft.color})
+        )
+        scene.add(spacecraftPath);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -270,6 +276,7 @@
                 spacecraft.velocity.add(adts);
                 spacecraft.position.add(spacecraft.velocity.clone().multiplyScalar(dts));
             }
+            spacecraftPositions.push(spacecraft.position.clone());
         }
 
         const clock = new THREE.Clock();
@@ -286,6 +293,7 @@
 
             earthMesh.rotation.y = earth.rotation;
             spacecraftMesh.position.copy(spacecraft.position);
+            spacecraftPath.geometry.setFromPoints(spacecraftPositions);
 
             renderer.render(scene, camera);
 
