@@ -132,10 +132,14 @@
         const renderer = new THREE.WebGLRenderer();
         document.body.appendChild(renderer.domElement);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000000);
-        const cameraDist = earth.radius * 4;
-        const cameraPos = new THREE.Vector3(0, 0, 1).normalize().multiplyScalar(cameraDist);
-        camera.position.copy(cameraPos);
+        const aspect = window.innerWidth / window.innerHeight;
+        const frustumSize = earth.radius * 8;
+        const camera = new THREE.OrthographicCamera(
+            frustumSize * aspect / -2, frustumSize * aspect / 2,
+            frustumSize / 2, frustumSize / -2,
+            0.1, 100000000
+        );
+        camera.position.set(0, 0, earth.radius * 4);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
 
