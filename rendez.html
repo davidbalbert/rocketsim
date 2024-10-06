@@ -13,6 +13,7 @@
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            background-color: black;
         }
 
         #controls {
@@ -97,11 +98,34 @@
             mass: 5.972e24, // kg
             radius: 6371,   // km
             tilt: rad(23.44),
-            position: new THREE.Vector3(0, 0, 0),
-            velocity: new THREE.Vector3(0, 0, 0),
+            position: new THREE.Vector3(),
+            velocity: new THREE.Vector3(),
+            rotation: 0,
             rotationalVelocity: 2*PI/86164.1, // rad/s. denominator is seconds in a sidereal day
             color: 0x2233ff,
         };
+
+        // based on Gemini VI
+        function makeSpacecraft() {
+            const perigee = 161 + earth.radius;  // km
+            const apogee = 259.4 + earth.radius; // km
+            const inclination = rad(28.97);
+
+            // vis-viva equation, solving for velocity at perigee
+            const mu = G * earth.mass;
+            const a = (perigee + apogee) / 2; // length of semi-major axis
+            const r = perigee;
+            const vmag = Math.sqrt(mu * (2/r - 1/a));
+            
+            return {
+                mass: 3546, // kg
+                position: new THREE.Vector3(perigee, 0, 0),
+                velocity: new THREE.Vector3(0, vmag*cos(inclination), vmag*sin(inclination)),
+                color: 0xffff00,
+            }
+        }
+        const spacecraft = makeSpacecraft();
+
 
         const scene = new THREE.Scene();
 
@@ -139,7 +163,7 @@
             );
         }
 
-        function createEarth() {
+        function makeEarthMesh() {
             const geometry = new THREE.SphereGeometry(earth.radius, 64, 64);
             const material = new THREE.MeshPhongMaterial({
                 color: 0x1a3f5c,  // Darker blue color
@@ -184,8 +208,19 @@
 
             return [mesh, container];
         }
-        const [earthMesh, earthContainer] = createEarth();
+        const [earthMesh, earthContainer] = makeEarthMesh();
         scene.add(earthContainer);
+
+        function makeSpacecraftMesh() {
+            const geometry = new THREE.SphereGeometry(1, 32, 32);
+            const material = new THREE.MeshBasicMaterial({color: spacecraft.color});
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(spacecraft.position);
+            return mesh;
+        }
+        const spacecraftMesh = makeSpacecraftMesh();
+        scene.add(spacecraftMesh);
+
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -214,8 +249,27 @@
             document.getElementById('clock').textContent = text;
         }
 
+        function updateSpacecraftSize() {
+            const d = camera.position.distanceTo(spacecraftMesh.position);
+            const scale = d * 0.005;
+            spacecraftMesh.scale.set(scale, scale, scale);
+        }
+
+        const steps = 1000;
         function simulate(dt) {
-            earthMesh.rotation.y += earth.rotationalVelocity * dt;
+            earth.rotation += earth.rotationalVelocity * dt;
+
+            const r = spacecraft.position.clone().sub(earth.position);
+            const mu = G * earth.mass;
+            const a = r.clone().normalize().multiplyScalar(-mu / r.lengthSq());
+
+            const dts = dt / steps;
+            const adts = a.clone().multiplyScalar(dts);
+
+            for (let i = 0; i < steps; i++) {
+                spacecraft.velocity.add(adts);
+                spacecraft.position.add(spacecraft.velocity.clone().multiplyScalar(dts));
+            }
         }
 
         const clock = new THREE.Clock();
@@ -226,8 +280,13 @@
             if (0 < dt && dt < 0.1) {
                 const scaled = dt * timeScale;
                 updateClock(scaled);
+                updateSpacecraftSize();
                 simulate(scaled);
             }
+
+            earthMesh.rotation.y = earth.rotation;
+            spacecraftMesh.position.copy(spacecraft.position);
+
             renderer.render(scene, camera);
 
         }
