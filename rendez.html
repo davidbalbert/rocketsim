@@ -105,11 +105,9 @@
             color: 0x2233ff,
         };
 
-        // based on Gemini VI
-        function makeSpacecraft() {
-            const perigee = 161 + earth.radius;  // km
-            const apogee = 259.4 + earth.radius; // km
-            const inclination = rad(28.97);
+        function makeSpacecraft({mass, perigee, apogee, inclination, color}) {
+            perigee += earth.radius;  // km
+            apogee += earth.radius; // km
 
             // vis-viva equation, solving for velocity at perigee
             const mu = G * earth.mass;
@@ -121,10 +119,14 @@
                 mass: 3546, // kg
                 position: new THREE.Vector3(perigee, 0, 0),
                 velocity: new THREE.Vector3(0, vmag*cos(inclination), vmag*sin(inclination)),
-                color: 0xffff00,
+                color: color,
+                positions: [],
             }
         }
-        const spacecraft = makeSpacecraft();
+
+        // based on Gemini VI
+        const spacecraft = makeSpacecraft({mass: 3546, perigee: 161, apogee: 259.4, inclination: rad(28.97), color: 0xffff00});
+
 
 
         const scene = new THREE.Scene();
@@ -212,19 +214,25 @@
         const earthMesh = makeEarthMesh();
         scene.add(earthMesh);
 
-        function makeSpacecraftMesh() {
+        function makeSpacecraftMesh(spacecraft) {
             const geometry = new THREE.SphereGeometry(1, 32, 32);
             const material = new THREE.MeshBasicMaterial({color: spacecraft.color});
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.copy(spacecraft.position);
             return mesh;
         }
-        const spacecraftMesh = makeSpacecraftMesh();
+        const spacecraftMesh = makeSpacecraftMesh(spacecraft);
         scene.add(spacecraftMesh);
 
-        const spacecraftPositions = [];
+        function makeTrail(spacecraft) {
+            return new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(spacecraft.positions),
+                new THREE.LineBasicMaterial({color: spacecraft.color})
+            );
+        }
+
         const spacecraftPath = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints(spacecraftPositions),
+            new THREE.BufferGeometry().setFromPoints(spacecraft.positions),
             new THREE.LineBasicMaterial({color: spacecraft.color})
         )
         scene.add(spacecraftPath);
@@ -345,7 +353,7 @@
             const r = spacecraft.position;
             const v = spacecraft.velocity;
 
-            spacecraftPositions.push(r.clone());
+            spacecraft.positions.push(r.clone());
 
             let state = [
                 r.x, r.y, r.z,
@@ -377,7 +385,7 @@
 
             earthMesh.rotation.y = earth.rotation;
             spacecraftMesh.position.copy(spacecraft.position);
-            spacecraftPath.geometry.setFromPoints(spacecraftPositions);
+            spacecraftPath.geometry.setFromPoints(spacecraft.positions);
 
             renderer.render(scene, camera);
 
