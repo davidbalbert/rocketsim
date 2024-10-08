@@ -315,11 +315,11 @@
 
 
         // f returns the derivative of the state at time t
-        function rk4(f, t, y, h) {
-            const k1 = f(t, y);
-            const k2 = f(t + h/2, vadd(vdup(y), k1, h/2));
-            const k3 = f(t + h/2, vadd(vdup(y), k2, h/2));
-            const k4 = f(t + h, vadd(vdup(y), k3, h));
+        function rk4(f, y, t, h, args) {
+            const k1 = f(t, y, args);
+            const k2 = f(t + h/2, vadd(vdup(y), k1, h/2), args);
+            const k3 = f(t + h/2, vadd(vdup(y), k2, h/2), args);
+            const k4 = f(t + h, vadd(vdup(y), k3, h), args);
             
             // y = yprev + h/6*(k1 + 2*k2 + 2*k3 + k4)
             vmul(k1, h/6);
@@ -330,10 +330,10 @@
             return vsum(y, k1, k2, k3, k4);
         }
 
-        // state = [x, y, z, vx, vy, vz, mu]
-        function twobody(t, state) {
+        // state = [x, y, z, vx, vy, vz]
+        function twobody(t, state, args) {
             const r = state.slice(0, 3);
-            const mu = state[6];
+            const { mu } = args;
 
             // a = aMag * rHat
             // a = -mu/|r|^2 * r/|r|
@@ -344,7 +344,6 @@
             return [
                 state[3], state[4], state[5],
                 a[0], a[1], a[2],
-                0, // mu is constant
             ];
         }
 
@@ -358,13 +357,14 @@
             let state = [
                 r.x, r.y, r.z,
                 v.x, v.y, v.z,
-                G * earth.mass,
             ];
+
+            const mu = G * earth.mass;
 
             const dts = dt / steps;
             for (let i = 0; i < steps; i++) {
                 earth.rotation += earth.rotationalVelocity * dts;
-                state = rk4(twobody, t, state, dts);
+                state = rk4(twobody, state, t, dts, {mu: mu});
             }
             earth.rotation = (earth.rotation + 2*PI) % (2*PI);
             spacecraft.position.fromArray(state, 0);
