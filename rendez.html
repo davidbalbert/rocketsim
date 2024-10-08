@@ -144,11 +144,12 @@
         camera.updateProjectionMatrix();
 
         const control = new OrbitControls(camera, renderer.domElement);
+
         control.zoomSpeed = 2.0;
         control.panSpeed = 0.4;
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-        directionalLight.position.set(sin(rad(60)), 0, cos(rad(60)));
+        directionalLight.position.set(sin(rad(60)), sin(earth.tilt), cos(rad(60)));
         scene.add(directionalLight);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -206,14 +207,10 @@
                 });
             });
 
-            const container = new THREE.Object3D();
-            container.add(mesh);
-            container.rotation.z = -earth.tilt;
-
-            return [mesh, container];
+            return mesh;
         }
-        const [earthMesh, earthContainer] = makeEarthMesh();
-        scene.add(earthContainer);
+        const earthMesh = makeEarthMesh();
+        scene.add(earthMesh);
 
         function makeSpacecraftMesh() {
             const geometry = new THREE.SphereGeometry(1, 32, 32);
