@@ -124,10 +124,8 @@
             }
         }
 
-        // based on Gemini VI
-        const spacecraft = makeSpacecraft({mass: 3546, perigee: 161, apogee: 259.4, inclination: rad(28.97), color: 0xffff00});
-
-
+        const gemini6 = makeSpacecraft({mass: 3546, perigee: 161, apogee: 259.4, inclination: rad(28.97), color: 0xffff00});
+        const gemini7 = makeSpacecraft({mass: 3663, perigee: 299, apogee: 302, inclination: rad(28.9), color: 0xff00ff});
 
         const scene = new THREE.Scene();
 
@@ -221,8 +219,11 @@
             mesh.position.copy(spacecraft.position);
             return mesh;
         }
-        const spacecraftMesh = makeSpacecraftMesh(spacecraft);
-        scene.add(spacecraftMesh);
+        const g6Mesh = makeSpacecraftMesh(gemini6);
+        scene.add(g6Mesh);
+
+        const g7Mesh = makeSpacecraftMesh(gemini7);
+        scene.add(g7Mesh);
 
         function makeTrail(spacecraft) {
             return new THREE.Line(
@@ -230,12 +231,11 @@
                 new THREE.LineBasicMaterial({color: spacecraft.color})
             );
         }
+        const g6Trail = makeTrail(gemini6);
+        scene.add(g6Trail);
 
-        const spacecraftPath = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints(spacecraft.positions),
-            new THREE.LineBasicMaterial({color: spacecraft.color})
-        )
-        scene.add(spacecraftPath);
+        const g7Trail = makeTrail(gemini7);
+        scene.add(g7Trail);
 
         function handleResize() {
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -265,9 +265,10 @@
         }
 
         function updateSpacecraftSize() {
-            const d = camera.position.distanceTo(spacecraftMesh.position);
+            const d = camera.position.distanceTo(g6Mesh.position);
             const scale = d * 0.005;
-            spacecraftMesh.scale.set(scale, scale, scale);
+            g6Mesh.scale.set(scale, scale, scale);
+            g7Mesh.scale.set(scale, scale, scale);
         }
 
         function vdup(v) {
@@ -349,26 +350,37 @@
 
         const steps = 1000;
         function simulate(t, dt) {
-            const r = spacecraft.position;
-            const v = spacecraft.velocity;
-
-            spacecraft.positions.push(r.clone());
-
-            let state = [
-                r.x, r.y, r.z,
-                v.x, v.y, v.z,
-            ];
-
             const mu = G * earth.mass;
+
+            const r6 = gemini6.position;
+            const v6 = gemini6.velocity;
+            let state6 = [
+                r6.x, r6.y, r6.z,
+                v6.x, v6.y, v6.z,
+            ];
+            gemini6.positions.push(r6.clone());
+
+            const r7 = gemini7.position;
+            const v7 = gemini7.velocity;
+            let state7 = [
+                r7.x, r7.y, r7.z,
+                v7.x, v7.y, v7.z,
+            ];
+            gemini7.positions.push(r7.clone());
 
             const dts = dt / steps;
             for (let i = 0; i < steps; i++) {
                 earth.rotation += earth.rotationalVelocity * dts;
-                state = rk4(twobody, state, t, dts, {mu: mu});
+                state6 = rk4(twobody, state6, t, dts, {mu: mu});
+                state7 = rk4(twobody, state7, t, dts, {mu: mu});
             }
             earth.rotation = (earth.rotation + 2*PI) % (2*PI);
-            spacecraft.position.fromArray(state, 0);
-            spacecraft.velocity.fromArray(state, 3);
+
+            gemini6.position.fromArray(state6, 0);
+            gemini6.velocity.fromArray(state6, 3);
+
+            gemini7.position.fromArray(state7, 0);
+            gemini7.velocity.fromArray(state7, 3);
         }
 
         const clock = new THREE.Clock();
@@ -384,11 +396,13 @@
             }
 
             earthMesh.rotation.y = earth.rotation;
-            spacecraftMesh.position.copy(spacecraft.position);
-            spacecraftPath.geometry.setFromPoints(spacecraft.positions);
+            g6Mesh.position.copy(gemini6.position);
+            g6Trail.geometry.setFromPoints(gemini6.positions);
+
+            g7Mesh.position.copy(gemini7.position);
+            g7Trail.geometry.setFromPoints(gemini7.positions);
 
             renderer.render(scene, camera);
-
         }
         renderer.setAnimationLoop(animate);
         handleResize();
