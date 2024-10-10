@@ -81,6 +81,9 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        // https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_coastline.geojson
+        const continents = await (await fetch('./continents.geojson')).json();
+
         const sin = Math.sin;
         const cos = Math.cos;
         const PI = Math.PI;
@@ -220,20 +223,15 @@
             const axisLine = new THREE.Line(axisGeometry, axisMaterial);
             mesh.add(axisLine);
 
-            // https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_coastline.geojson
-            const loader = new THREE.FileLoader();
-            loader.load('continents.geojson', (data) => {
-                const geojson = JSON.parse(data);
-                const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
-                geojson.features.forEach((feature) => {
-                    const geometry = new THREE.BufferGeometry().setFromPoints(
-                        feature.geometry.coordinates.map(coord =>
-                            latLonToVec(coord[1], coord[0], earth.radius)
-                        )
-                    );
-                    const line = new THREE.Line(geometry, material);
-                    mesh.add(line);
-                });
+            const continentsMaterial = new THREE.LineBasicMaterial({color: 0xff00ff});
+            continents.features.forEach((feature) => {
+                const geometry = new THREE.BufferGeometry().setFromPoints(
+                    feature.geometry.coordinates.map(coord =>
+                        latLonToVec(coord[1], coord[0], earth.radius)
+                    )
+                );
+                const line = new THREE.Line(geometry, continentsMaterial);
+                mesh.add(line);
             });
 
             return mesh;
@@ -298,7 +296,6 @@
         }
 
         function updateSpacecraftSize() {
-
             for (const mesh of vehicleMeshes) {
                 const d = camera.position.distanceTo(mesh.position);
                 const scale = d * 0.005;
