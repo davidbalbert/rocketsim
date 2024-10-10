@@ -105,7 +105,22 @@
             color: 0x2233ff,
         };
 
-        function makeSpacecraft({mass, perigee, apogee, inclination, color}) {
+        function perifocalToInertial(Ω, i, ω) {
+            const cosΩ = cos(Ω);
+            const sinΩ = sin(Ω);
+            const cosi = cos(i);
+            const sini = sin(i);
+            const cosω = cos(ω);
+            const sinω = sin(ω);
+
+            return new THREE.Matrix3().set(
+                cosΩ*cosω - sinΩ*sinω*cosi,    -cosΩ*sinω - sinΩ*cosω*cosi,   sinΩ*sini,
+                sinΩ*cosω + cosΩ*sinω*cosi,    -sinΩ*sinω + cosΩ*cosω*cosi,   -cosΩ*sini,
+                sinω*sini,                     cosω*sini,                     cosi
+            );
+        }
+
+        function makeSpacecraft({mass, perigee, apogee, rightAscension, inclination, argumentOfPeriapsis, color}) {
             perigee += earth.radius;  // km
             apogee += earth.radius; // km
 
@@ -114,19 +129,32 @@
             const a = (perigee + apogee) / 2; // length of semi-major axis
             const r = perigee;
             const vmag = Math.sqrt(mu * (2/r - 1/a));
-            
+
+            const t = perifocalToInertial(rightAscension, inclination, argumentOfPeriapsis);
+            const position = new THREE.Vector3(r, 0, 0);
+            const velocity = new THREE.Vector3(0, vmag, 0);
+            position.applyMatrix3(t);
+            velocity.applyMatrix3(t);
+
             return {
-                mass: 3546, // kg
-                position: new THREE.Vector3(perigee, 0, 0),
-                velocity: new THREE.Vector3(0, vmag*cos(inclination), vmag*sin(inclination)),
+                mass: mass, // kg
+                position: position,
+                velocity: velocity,
                 color: color,
                 positions: [],
             }
         }
-
-        const gemini6 = makeSpacecraft({mass: 3546, perigee: 161, apogee: 259.4, inclination: rad(28.97), color: 0xffff00});
-        const gemini7 = makeSpacecraft({mass: 3663, perigee: 299, apogee: 302, inclination: rad(28.9), color: 0x00ff00});
-        const vehicles = [gemini6, gemini7];
+    
+        const iss = makeSpacecraft({
+            mass: 450000,
+            perigee: 412,
+            apogee: 423,
+            rightAscension: rad(103.2016),
+            inclination: rad(51.6399),
+            argumentOfPeriapsis: rad(62.2836),
+            color: 0xffff00
+        });
+        const vehicles = [iss];
 
         const scene = new THREE.Scene();
 
@@ -397,7 +425,7 @@
                 simulate(clock.oldTime, scaled);
             }
 
-            earthMesh.rotation.y = earth.rotation;
+            earthMesh.rotation.z = earth.rotation;
 
             for (let i = 0; i < vehicles.length; i++) {
                 vehicleMeshes[i].position.copy(vehicles[i].position);
