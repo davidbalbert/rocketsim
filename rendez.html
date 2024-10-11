@@ -44,7 +44,6 @@
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: var(--track-height);
-            cursor: pointer;
             background: linear-gradient(to right, #0070ff var(--range-progress, 0%), white var(--range-progress, 0%));
             border-radius: calc(var(--track-height) / 2);
             box-shadow: inset 0 2px 5px -5px #000;
@@ -65,7 +64,6 @@
         input[type=range]::-moz-range-track {
             width: 100%;
             height: var(--track-height);
-            cursor: pointer;
             background: white;
             border-radius: calc(var(--track-height) / 2);
             box-shadow: inset 0 2px 5px -5px #000;
@@ -128,7 +126,7 @@
         }
 
         #sidebar {
-            width: 500px;
+            width: 700px;
         }
 
         #scene {
@@ -421,6 +419,10 @@
             const padTop = 20;
             const padLeft = 40;
 
+            // const strokeWidth = window.devicePixelRatio > 1 ? 0.5 : 1;
+            const strokeWidth = 1;
+            const gridColor = "#bbbbbb";
+
             const sidebar = d3.select("#sidebar");
             const width = sidebar.node().clientWidth;
 
@@ -456,7 +458,7 @@
                 .attr("d", path)
                 .attr("fill", "none")
                 .attr("stroke", "#ff00ff")
-                .attr("stroke-width", "0.5px");
+                .attr("stroke-width", strokeWidth);
 
             const graticule = d3.geoGraticule()
                 .step([30, 30])
@@ -465,15 +467,15 @@
                 .datum(graticule)
                 .attr("d", path)
                 .attr("fill", "none")
-                .attr("stroke", "#cccccc")
-                .attr("stroke-width", 0.5);
+                .attr("stroke", gridColor)
+                .attr("stroke-width", strokeWidth);
 
             groundtrack.append("path")
                 .datum(graticule.outline())
                 .attr("d", path)
                 .attr("fill", "none")
-                .attr("stroke", "#cccccc")
-                .attr("stroke-width", 0.5);
+                .attr("stroke", gridColor)
+                .attr("stroke-width", strokeWidth);
 
 
             const xscale = d3.scaleLinear()
@@ -489,10 +491,11 @@
                 .attr("transform", `translate(0, ${chartHeight + padLeft})`)
                 .call(xaxis)
                 .selectAll("text")
-                .style("fill", "#cccccc");
+                .style("fill", gridColor);
 
             groundtrack.selectAll(".domain")
-                .style("stroke", "#cccccc");
+                .style("stroke", gridColor)
+                .style("stroke-width", strokeWidth);
 
             groundtrack.append("text")
                 .attr("text-anchor", "middle")
@@ -500,7 +503,7 @@
                 .attr("y", chartHeight + padLeft + 30)
                 .style("font-size", "10px")
                 .style("font-family", "sans-serif")
-                .style("fill", "#cccccc")
+                .style("fill", gridColor)
                 .text("Longitude");
         
             const yscale = d3.scaleLinear()
@@ -516,18 +519,18 @@
                 .attr("transform", `translate(${padLeft}, 0)`)
                 .call(yaxis)
                 .selectAll("text")
-                .style("fill", "#cccccc");
+                .style("fill", gridColor);
             
             groundtrack.selectAll(".domain")
-                .style("stroke", "#cccccc")
-                .style("stroke-width", "0.5px");
+                .style("stroke", gridColor)
+                .style("stroke-width", strokeWidth);
 
             groundtrack.append("text")
                 .attr("text-anchor", "middle")
                 .attr("transform", `translate(${padLeft - 25}, ${height/2}) rotate(-90)`)
                 .style("font-size", "10px")
                 .style("font-family", "sans-serif")
-                .style("fill", "#cccccc")
+                .style("fill", gridColor)
                 .text("Latitude");
 
             return groundtrack;
