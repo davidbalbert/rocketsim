@@ -419,9 +419,9 @@
             const padTop = 20;
             const padLeft = 40;
 
-            // const strokeWidth = window.devicePixelRatio > 1 ? 0.5 : 1;
             const strokeWidth = 1;
-            const gridColor = "#bbbbbb";
+            const gridColor = "#333333";
+            const textColor = "#cccccc";
 
             const sidebar = d3.select("#sidebar");
             const width = sidebar.node().clientWidth;
@@ -437,28 +437,11 @@
                 .attr("height", height)
                 .style("shape-rendering", "crispEdges");
 
-            groundtrack.append("rect")
-                .attr("x", 0)
-                .attr("y", 0)
-                .attr("width", width)
-                .attr("height", height)
-                .attr("fill", "none")
-                .attr("stroke", "red")
-                .attr("stroke-width", 1);
-
             const projection = d3.geoEquirectangular()
                 .scale(chartWidth / 2 / Math.PI)
                 .translate([chartWidth/2 + padLeft, chartHeight/2 + padLeft]);
 
             const path = d3.geoPath(projection);
-
-            groundtrack.selectAll("path")
-                .data(continents.features)
-                .join("path")
-                .attr("d", path)
-                .attr("fill", "none")
-                .attr("stroke", "#ff00ff")
-                .attr("stroke-width", strokeWidth);
 
             const graticule = d3.geoGraticule()
                 .step([30, 30])
@@ -491,11 +474,7 @@
                 .attr("transform", `translate(0, ${chartHeight + padLeft})`)
                 .call(xaxis)
                 .selectAll("text")
-                .style("fill", gridColor);
-
-            groundtrack.selectAll(".domain")
-                .style("stroke", gridColor)
-                .style("stroke-width", strokeWidth);
+                .style("fill", textColor);
 
             groundtrack.append("text")
                 .attr("text-anchor", "middle")
@@ -503,7 +482,7 @@
                 .attr("y", chartHeight + padLeft + 30)
                 .style("font-size", "10px")
                 .style("font-family", "sans-serif")
-                .style("fill", gridColor)
+                .style("fill", textColor)
                 .text("Longitude");
         
             const yscale = d3.scaleLinear()
@@ -519,7 +498,7 @@
                 .attr("transform", `translate(${padLeft}, 0)`)
                 .call(yaxis)
                 .selectAll("text")
-                .style("fill", gridColor);
+                .style("fill", textColor);
             
             groundtrack.selectAll(".domain")
                 .style("stroke", gridColor)
@@ -530,8 +509,17 @@
                 .attr("transform", `translate(${padLeft - 25}, ${height/2}) rotate(-90)`)
                 .style("font-size", "10px")
                 .style("font-family", "sans-serif")
-                .style("fill", gridColor)
+                .style("fill", textColor)
                 .text("Latitude");
+
+            groundtrack.append("g")
+                .selectAll("path")
+                .data(continents.features)
+                .join("path")
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#ff00ff")
+                .attr("stroke-width", strokeWidth);
 
             return groundtrack;
         }
