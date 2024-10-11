@@ -117,23 +117,6 @@
             margin-top: 5px;
         }
 
-        /* #container {
-            display: flex;
-            width: 100%;
-            height: 100%;
-        }
-
-        #scene {
-            flex: 1;
-        }
-
-        #sidebar {
-            width: 200px;
-            height: 100%;
-            background-color: white;
-            flex-shrink: 0;
-        } */
-
         #container {
             display: flex;
             width: 100%;
@@ -141,16 +124,19 @@
         }
 
         #scene-container {
-            /* width: 100%; */
             flex: 1;
         }
 
         #sidebar {
             width: 500px;
-            background-color: white;
         }
 
         #scene {
+            width: 100%;
+            height: 100%;
+        }
+
+        #groundtrack {
             width: 100%;
             height: 100%;
         }
@@ -160,7 +146,8 @@
         {
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three@v0.169.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.169.0/examples/jsm/"
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.169.0/examples/jsm/",
+                "d3": "https://cdn.jsdelivr.net/npm/d3@7/+esm"
             }
         }
     </script>
@@ -185,6 +172,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import * as d3 from 'd3';
 
         document.querySelectorAll('input[type=range]').forEach(slider => {
             function updateProgress() {
@@ -331,7 +319,6 @@
                 -r * sin(phi) * cos(theta),
                 -r * sin(phi) * sin(theta),
                 r * cos(phi),
-
             );
         }
 
@@ -429,6 +416,124 @@
                 mesh.scale.set(scale, scale, scale);
             }
         }
+
+        function makeGroundtrack() {
+            const padTop = 20;
+            const padLeft = 40;
+
+            const sidebar = d3.select("#sidebar");
+            const width = sidebar.node().clientWidth;
+
+            const chartWidth = width - 2*padLeft;
+            const chartHeight = chartWidth/2;
+            const height = chartHeight + padLeft*2;
+
+            const groundtrack = sidebar
+                .append("svg")
+                .attr("id", "groundtrack")
+                .attr("width", width)
+                .attr("height", height)
+                .style("shape-rendering", "crispEdges");
+
+            groundtrack.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", width)
+                .attr("height", height)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 1);
+
+            const projection = d3.geoEquirectangular()
+                .scale(chartWidth / 2 / Math.PI)
+                .translate([chartWidth/2 + padLeft, chartHeight/2 + padLeft]);
+
+            const path = d3.geoPath(projection);
+
+            groundtrack.selectAll("path")
+                .data(continents.features)
+                .join("path")
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#ff00ff")
+                .attr("stroke-width", "0.5px");
+
+            const graticule = d3.geoGraticule()
+                .step([30, 30])
+
+            groundtrack.append("path")
+                .datum(graticule)
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#cccccc")
+                .attr("stroke-width", 0.5);
+
+            groundtrack.append("path")
+                .datum(graticule.outline())
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#cccccc")
+                .attr("stroke-width", 0.5);
+
+
+            const xscale = d3.scaleLinear()
+                .domain([-180, 180])
+                .range([padLeft, padLeft+chartWidth]);
+
+            const xaxis = d3.axisBottom(xscale)
+                .tickValues(d3.range(-180, 181, 30))
+                .tickSize(0)
+                .tickPadding(5);
+
+            groundtrack.append("g")
+                .attr("transform", `translate(0, ${chartHeight + padLeft})`)
+                .call(xaxis)
+                .selectAll("text")
+                .style("fill", "#cccccc");
+
+            groundtrack.selectAll(".domain")
+                .style("stroke", "#cccccc");
+
+            groundtrack.append("text")
+                .attr("text-anchor", "middle")
+                .attr("x", width/2)
+                .attr("y", chartHeight + padLeft + 30)
+                .style("font-size", "10px")
+                .style("font-family", "sans-serif")
+                .style("fill", "#cccccc")
+                .text("Longitude");
+        
+            const yscale = d3.scaleLinear()
+                .domain([-90, 90])
+                .range([padLeft+chartHeight, padLeft]);
+
+            const yaxis = d3.axisLeft(yscale)
+                .tickValues(d3.range(-90, 91, 30))
+                .tickSize(0)
+                .tickPadding(5);
+
+            groundtrack.append("g")
+                .attr("transform", `translate(${padLeft}, 0)`)
+                .call(yaxis)
+                .selectAll("text")
+                .style("fill", "#cccccc");
+            
+            groundtrack.selectAll(".domain")
+                .style("stroke", "#cccccc")
+                .style("stroke-width", "0.5px");
+
+            groundtrack.append("text")
+                .attr("text-anchor", "middle")
+                .attr("transform", `translate(${padLeft - 25}, ${height/2}) rotate(-90)`)
+                .style("font-size", "10px")
+                .style("font-family", "sans-serif")
+                .style("fill", "#cccccc")
+                .text("Latitude");
+
+            return groundtrack;
+        }
+        const groundtrack = makeGroundtrack();
+
 
         function vdup(v) {
             return [...v];
