@@ -28,7 +28,6 @@
             font-size: 16px;
             padding: 5px 10px;
             border-radius: 5px;
-            background-color: rgba(0, 0, 0, 0.5);
         }
 
         #time-control {
@@ -38,7 +37,6 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            background-color: rgba(0, 0, 0, 0.5);
         }
 
         #time-control label {
@@ -62,6 +60,69 @@
             height: 100%;
             display: block;
         }
+
+        /* Fix bug where slider track is not visible against a black background on Safari */
+        input[type=range] {
+            -webkit-appearance: none;
+            background-color: transparent;
+            margin: 8px 2px;
+
+            --track-height: 6px;
+            --thumb-size: 16px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background: linear-gradient(to bottom, #ddd, white);
+            
+            width: var(--thumb-size);
+            height: var(--thumb-size);
+            border-radius: 50%;
+            margin-top: calc(var(--track-height) / 2 - var(--thumb-size) / 2);
+
+            border: 0.5px solid #777;
+            box-shadow:
+                0 0 5px #555,
+                inset 0 2px 2px -2px white;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: var(--track-height);
+            cursor: pointer;
+            background: linear-gradient(to right, #0070ff var(--range-progress, 0%), white var(--range-progress, 0%));
+            border-radius: calc(var(--track-height) / 2);
+            box-shadow: inset 0 8px 10px -10px #000;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            background: linear-gradient(to bottom, #ddd, white);
+            
+            width: var(--thumb-size);
+            height: var(--thumb-size);
+            border-radius: 50%;
+            border: 0.5px solid #777;
+            box-shadow:
+                0 0 5px #555,
+                inset 0 2px 2px -2px white;
+        }
+
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: var(--track-height);
+            cursor: pointer;
+            background: white;
+            border-radius: calc(var(--track-height) / 2);
+            box-shadow: inset 0 8px 10px -10px #000;
+        }
+
+        input[type=range]::-moz-range-progress {
+            background: #0070ff;
+            height: var(--track-height);
+            border-radius: calc(var(--track-height) / 2);
+            box-shadow: inset 0 8px 10px -10px #000;
+        }
+
     </style>
 
     <script type="importmap">
@@ -87,6 +148,19 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        document.querySelectorAll('input[type=range]').forEach(slider => {
+            function updateProgress() {
+                const min = parseFloat(this.min);
+                const max = parseFloat(this.max);
+                const value = parseFloat(this.value);
+                const percent = ((value - min) / (max - min)) * 100;
+                this.style.setProperty('--range-progress', `${percent}%`);
+            }
+            slider.addEventListener('input', updateProgress);
+            updateProgress.call(slider);
+        });
+
 
         // https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_coastline.geojson
         const continents = await (await fetch('./continents.geojson')).json();
