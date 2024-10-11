@@ -196,6 +196,10 @@
             return degrees * Math.PI / 180;
         }
 
+        function deg(radians) {
+            return radians * 180 / Math.PI;
+        }
+
         let elapsedTime = 0;
         let timeScale = 1;
 
@@ -209,7 +213,7 @@
             velocity: new THREE.Vector3(),
             rotation: 0,
             rotationalVelocity: 2*PI/86164.1, // rad/s. denominator is seconds in a sidereal day
-            color: 0x2233ff,
+            color: "#2233ff",
         };
 
         function perifocalToInertial(Ω, i, ω) {
@@ -259,7 +263,7 @@
             rightAscension: rad(103.2016),
             inclination: rad(51.6399),
             argumentOfPeriapsis: rad(62.2836),
-            color: 0xffff00
+            color: "#ffff00",
         });
         const vehicles = [iss];
 
@@ -318,6 +322,15 @@
                 -r * sin(phi) * sin(theta),
                 r * cos(phi),
             );
+        }
+
+        function vecToLatLon(v, r) {
+            const vhat = v.clone().normalize();
+
+            const lat = deg(Math.asin(vhat.z));
+            const lon = deg(Math.atan2(-vhat.y, -vhat.x));
+
+            return [lat, lon];
         }
 
         function makeEarthMesh() {
@@ -415,7 +428,7 @@
             }
         }
 
-        function makeGroundtrack() {
+        function makeGroundTrack() {
             const padTop = 20;
             const padLeft = 40;
 
@@ -520,10 +533,20 @@
                 .attr("fill", "none")
                 .attr("stroke", "#ff00ff")
                 .attr("stroke-width", strokeWidth);
+            
+            const vehicleDots = groundtrack.append("g");
 
-            return groundtrack;
+            return function() {
+                    vehicleDots.selectAll("circle")
+                        .data(vehicles)
+                        .join("circle")
+                        .attr("r", 3)
+                        .attr("cx", d => xscale(vecToLatLon(d.position, earth.radius)[1]))
+                        .attr("cy", d => yscale(vecToLatLon(d.position, earth.radius)[0]))
+                        .attr("fill", d => d.color);
+            }   
         }
-        const groundtrack = makeGroundtrack();
+        const updateGroundTrack = makeGroundTrack();
 
 
         function vdup(v) {
@@ -654,6 +677,7 @@
 
             updateViewport();
             renderer.render(scene, camera);
+            updateGroundTrack();
         }
         renderer.setAnimationLoop(animate);
     </script>
