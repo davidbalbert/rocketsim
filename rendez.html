@@ -330,8 +330,8 @@
             const vhat = v.clone().normalize();
 
             const lat = deg(Math.asin(vhat.z));
-            let lon = deg(Math.atan2(-vhat.y, -vhat.x) + earth.rotation);
-            lon = ((lon + 180) % 360) - 180;
+            let lon = deg(Math.atan2(vhat.y, vhat.x) - earth.rotation);
+            lon = ((lon - 180) % 360) + 180;
 
             return [lat, lon];
         }
