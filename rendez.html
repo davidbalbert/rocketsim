@@ -16,51 +16,6 @@
             background-color: black;
         }
 
-        #controls {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-family: Helvetica, Arial, sans-serif;
-        }
-
-        #clock {
-            font-size: 16px;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        #time-control {
-            margin-top: 5px;
-            padding: 10px;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        #time-control label {
-            color: white;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        #time-scale {
-            width: 200px;
-        }
-
-        #time-scale-value {
-            color: white;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        #scene {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
         /* Fix bug where slider track is not visible against a black background on Safari */
         input[type=range] {
             -webkit-appearance: none;
@@ -123,6 +78,82 @@
             box-shadow: inset 0 2px 5px -5px #000;
         }
 
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+
+        #clock {
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        #time-control {
+            margin-top: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #time-control label {
+            color: white;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        #time-scale {
+            width: 200px;
+        }
+
+        #time-scale-value {
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* #container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        #scene {
+            flex: 1;
+        }
+
+        #sidebar {
+            width: 200px;
+            height: 100%;
+            background-color: white;
+            flex-shrink: 0;
+        } */
+
+        #container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        #scene-container {
+            /* width: 100%; */
+            flex: 1;
+        }
+
+        #sidebar {
+            width: 500px;
+            background-color: white;
+        }
+
+        #scene {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 
     <script type="importmap">
@@ -144,7 +175,13 @@
             <div id="time-scale-value">1x</div>
         </div>
     </div>
-    <canvas id="scene"></canvas>
+    <div id="container">
+        <div id="scene-container">
+            <canvas id="scene"></canvas>
+        </div>
+        <div id="sidebar">
+        </div>
+    </div>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
