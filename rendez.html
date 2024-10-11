@@ -253,6 +253,7 @@
                 velocity: velocity,
                 color: color,
                 positions: [],
+                latlons: [],
             }
         }
     
@@ -313,9 +314,10 @@
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
-        function latLonToVec(lat, lon, r) {
-            const phi = rad(90 - lat)
-            const theta = rad(lon + 180)
+        function latLonToVec(lat, lon) {
+            const phi = rad(90 - lat);
+            const theta = rad(lon + 180) - earth.rotation;
+            const r = earth.radius;
 
             return new THREE.Vector3(
                 -r * sin(phi) * cos(theta),
@@ -328,7 +330,8 @@
             const vhat = v.clone().normalize();
 
             const lat = deg(Math.asin(vhat.z));
-            const lon = deg(Math.atan2(-vhat.y, -vhat.x));
+            let lon = deg(Math.atan2(-vhat.y, -vhat.x) + earth.rotation);
+            lon = ((lon + 180) % 360) - 180;
 
             return [lat, lon];
         }
@@ -360,7 +363,7 @@
             continents.features.forEach((feature) => {
                 const geometry = new THREE.BufferGeometry().setFromPoints(
                     feature.geometry.coordinates.map(coord =>
-                        latLonToVec(coord[1], coord[0], earth.radius)
+                        latLonToVec(coord[1], coord[0])
                     )
                 );
                 const line = new THREE.Line(geometry, continentsMaterial);
@@ -547,11 +550,11 @@
                     .join("g")
                     .attr("fill", d => d.color)
                     .selectAll("circle")
-                        .data(d => d.positions)
+                        .data(d => d.latlons)
                         .join("circle")
                         .attr("r", 1)
-                        .attr("cx", d => xscale(vecToLatLon(d)[1]))
-                        .attr("cy", d => yscale(vecToLatLon(d)[0]));
+                        .attr("cx", d => xscale(d[1]))
+                        .attr("cy", d => yscale(d[0]));
                         
                 vehicleDots.selectAll("circle")
                     .data(vehicles)
@@ -657,6 +660,7 @@
                 const state = makeState(v);
                 states.push(state);
                 v.positions.push(v.position.clone());
+                v.latlons.push(vecToLatLon(v.position));
             }
 
             const dts = dt / steps;
