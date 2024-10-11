@@ -56,6 +56,12 @@
             font-size: 14px;
             margin-top: 5px;
         }
+
+        #scene {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
     </style>
 
     <script type="importmap">
@@ -77,6 +83,7 @@
             <div id="time-scale-value">1x</div>
         </div>
     </div>
+    <canvas id="scene"></canvas>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -159,27 +166,44 @@
         });
         const vehicles = [iss];
 
-        const scene = new THREE.Scene();
-
-        const renderer = new THREE.WebGLRenderer();
-        document.body.appendChild(renderer.domElement);
-
-        const aspect = window.innerWidth / window.innerHeight;
-        const frustumSize = earth.radius * 8;
-        const camera = new THREE.OrthographicCamera(
-            frustumSize * aspect / -2, frustumSize * aspect / 2,
-            frustumSize / 2, frustumSize / -2,
-            0.1, 100000000
-        );
+        const canvas = document.getElementById('scene');
+        const renderer = new THREE.WebGLRenderer({canvas});
+        
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100000000);
         camera.up.set(0, 0, 1)
         camera.position.set(earth.radius * 4, 0, 0);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
 
-        const control = new OrbitControls(camera, renderer.domElement);
+        function updateViewport() {
+            const dpi = window.devicePixelRatio;
+            const width = Math.floor(canvas.clientWidth * dpi);
+            const height = Math.floor(canvas.clientHeight * dpi);
+            const aspect = width / height;
+
+            if (canvas.width === width && canvas.height === height) {
+                return;
+            }
+
+            renderer.setSize(width, height, false);
+
+            const frustumSize = earth.radius * 8;
+            camera.aspect = aspect;
+            camera.left = -frustumSize * aspect / 2;
+            camera.right = frustumSize * aspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = -frustumSize / 2;
+            camera.updateProjectionMatrix();
+
+        }
+        updateViewport();
+
+        const control = new OrbitControls(camera, canvas);
 
         control.zoomSpeed = 2.0;
         control.panSpeed = 0.4;
+
+        const scene = new THREE.Scene();
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
         directionalLight.position.set(sin(rad(60)), sin(earth.tilt), cos(rad(60)));
@@ -267,14 +291,6 @@
             scene.add(mesh);
             scene.add(trail);
         }
-
-        function handleResize() {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        }
-        window.addEventListener('resize', handleResize);
 
         const timeScaleSlider = document.getElementById('time-scale');
         const timeScaleValue = document.getElementById('time-scale-value');
@@ -429,10 +445,10 @@
                 vehicleTrails[i].geometry.setFromPoints(vehicles[i].positions);
             }
 
+            updateViewport();
             renderer.render(scene, camera);
         }
         renderer.setAnimationLoop(animate);
-        handleResize();
     </script>
 </body>
 </html>
