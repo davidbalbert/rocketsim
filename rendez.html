@@ -324,7 +324,7 @@
             );
         }
 
-        function vecToLatLon(v, r) {
+        function vecToLatLon(v) {
             const vhat = v.clone().normalize();
 
             const lat = deg(Math.asin(vhat.z));
@@ -534,16 +534,32 @@
                 .attr("stroke", "#ff00ff")
                 .attr("stroke-width", strokeWidth);
             
+            const tracks = groundtrack.append("g");
             const vehicleDots = groundtrack.append("g");
 
+            const line = d3.line()
+                .x(d => xscale(d[1]))
+                .y(d => yscale(d[0]));
+
             return function() {
-                    vehicleDots.selectAll("circle")
-                        .data(vehicles)
+                tracks.selectAll("g")
+                    .data(vehicles)
+                    .join("g")
+                    .attr("fill", d => d.color)
+                    .selectAll("circle")
+                        .data(d => d.positions)
                         .join("circle")
-                        .attr("r", 3)
-                        .attr("cx", d => xscale(vecToLatLon(d.position, earth.radius)[1]))
-                        .attr("cy", d => yscale(vecToLatLon(d.position, earth.radius)[0]))
-                        .attr("fill", d => d.color);
+                        .attr("r", 1)
+                        .attr("cx", d => xscale(vecToLatLon(d)[1]))
+                        .attr("cy", d => yscale(vecToLatLon(d)[0]));
+                        
+                vehicleDots.selectAll("circle")
+                    .data(vehicles)
+                    .join("circle")
+                    .attr("r", 3)
+                    .attr("cx", d => xscale(vecToLatLon(d.position)[1]))
+                    .attr("cy", d => yscale(vecToLatLon(d.position)[0]))
+                    .attr("fill", d => d.color);
             }   
         }
         const updateGroundTrack = makeGroundTrack();
