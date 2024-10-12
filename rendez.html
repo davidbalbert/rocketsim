@@ -663,6 +663,11 @@
                 const state = makeState(v);
                 states.push(state);
 
+                if (v.positions.length > 1000) {
+                    v.positions.shift();
+                    v.latlons.shift();
+                }
+
                 // Don't store positions that are closer than 10 km to the previous position
                 if (v.positions.length === 0 || v.positions[v.positions.length - 1].distanceTo(v.position) > 10) {
                     v.positions.push(v.position.clone());
@@ -700,8 +705,6 @@
                 vehicleMeshes[i].position.copy(vehicles[i].position);
                 vehicleTrails[i].geometry.setFromPoints(vehicles[i].positions);
             }
-
-            console.log(camera.zoom)
 
             updateViewport();
             updateSpacecraftSize();
