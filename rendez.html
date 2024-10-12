@@ -270,7 +270,18 @@
             argumentOfPeriapsis: rad(62.2836),
             color: "#ffff00",
         });
-        const vehicles = [iss];
+
+        const hubble = makeSpacecraft({
+            mass: 11100,
+            perigee: 537,
+            apogee: 540,
+            rightAscension: rad(0),
+            inclination: rad(28.5),
+            argumentOfPeriapsis: rad(0),
+            color: "#00ffff",
+        });
+
+        const vehicles = [iss, hubble];
 
         const canvas = document.getElementById('scene');
         const renderer = new THREE.WebGLRenderer({canvas});
