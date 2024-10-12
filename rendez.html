@@ -296,7 +296,6 @@
             camera.top = frustumSize / 2;
             camera.bottom = -frustumSize / 2;
             camera.updateProjectionMatrix();
-
         }
         updateViewport();
 
@@ -376,7 +375,9 @@
         scene.add(earthMesh);
 
         function makeSpacecraftMesh(spacecraft) {
-            const geometry = new THREE.SphereGeometry(1, 32, 32);
+            // 150 km seems to be a good size. It'd be nice if the pixel size of the spacecraft never
+            // changed, but I've struggled to make that work. Perhaps sprites would be better.
+            const geometry = new THREE.SphereGeometry(150, 32, 32);
             const material = new THREE.MeshBasicMaterial({color: spacecraft.color});
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.copy(spacecraft.position);
@@ -421,14 +422,6 @@
             const seconds = Math.floor(elapsedTime % 60);
             const text = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             document.getElementById('clock').textContent = text;
-        }
-
-        function updateSpacecraftSize() {
-            for (const mesh of vehicleMeshes) {
-                const d = camera.position.distanceTo(mesh.position);
-                const scale = d * 0.005;
-                mesh.scale.set(scale, scale, scale);
-            }
         }
 
         function makeGroundTrack() {
@@ -688,7 +681,6 @@
             if (0 < dt && dt < 0.1) {
                 const scaled = dt * timeScale;
                 updateClock(scaled);
-                updateSpacecraftSize();
                 simulate(clock.oldTime, scaled);
             }
 
