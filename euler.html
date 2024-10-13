@@ -45,7 +45,7 @@
 
         const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
         camera.up.set(0, 0, 1); // z-up
-        camera.position.set(10, 0, 0);
+        camera.position.set(2, 2, 1);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
 
@@ -61,7 +61,7 @@
             renderer.setSize(width, height, false);
 
             const aspect = width / height;
-            const frustumSize = 20;
+            const frustumSize = 40;
             camera.aspect = aspect;
             camera.left = -frustumSize * aspect / 2;
             camera.right = frustumSize * aspect / 2;
@@ -127,17 +127,17 @@
                 return sprite;
             }
 
-            // Effective 16px font size, but crisper at zoom < 1.0
-            const x = makeTextSprite('X', {fontSize: '32px', color, scale: 0.5});
-            x.position.set(scale+0.3, 0, 0);
+            // Render text at higher effective resolution for better zooming.
+            const x = makeTextSprite('X', {fontSize: '20px', color, scale: 0.5});
+            x.position.set(scale+0.5, 0, 0);
             axes.add(x);
 
-            const y = makeTextSprite('Y', {fontSize: '32px', color, scale: 0.5});
-            y.position.set(0, scale+0.3, 0);
+            const y = makeTextSprite('Y', {fontSize: '20px', color, scale: 0.5});
+            y.position.set(0, scale+0.5, 0);
             axes.add(y);
 
-            const z = makeTextSprite('Z', {fontSize: '32px', color, scale: 0.5});
-            z.position.set(0, 0, scale+0.3);
+            const z = makeTextSprite('Z', {fontSize: '20px', color, scale: 0.5});
+            z.position.set(0, 0, scale+0.5);
             axes.add(z);
 
             return axes;
