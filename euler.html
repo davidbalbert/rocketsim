@@ -15,12 +15,28 @@
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            color: white;
             background-color: black;
         }
 
         #scene {
             width: 100%;
             height: 100%;
+        }
+
+        #controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+        }
+
+        .sp-x > *:not(:last-child) {
+            margin-right: 0.5rem;
+        }
+
+        .sp-y > *:not(:last-child) {
+            margin-bottom: 0.75rem;
         }
     </style>
 
@@ -34,11 +50,97 @@
     </script>
 </head>
 <body>
+    <div id="controls">
+        <form class="sp-y">
+            <div>Euler angle (degrees)</div>
+            <div class="sp-x">
+                <label for="alpha">α</label>
+                <input type="number" id="alpha" step="0.1">
+                <select id="axisAlpha">
+                    <option value="1">X</option>
+                    <option value="2">Y</option>
+                    <option value="3">Z</option>
+                </select>
+            </div>
+            <div class="sp-x">
+                <label for="beta">β</label>
+                <input type="number" id="beta" step="0.1">
+                <select id="axisBeta">
+                    <option value="1">X</option>
+                    <option value="2">Y</option>
+                    <option value="3">Z</option>
+                </select>
+            </div>
+            <div class="sp-x">
+                <label for="gamma">γ</label>
+                <input type="number" id="gamma" step="0.1">
+                <select id="axisGamma">
+                    <option value="1">X</option>
+                    <option value="2">Y</option>
+                    <option value="3">Z</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
     <canvas id="scene"></canvas>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const angle = {
+            alpha: {value: 45, axis: 3},
+            beta: {value: 45, axis: 1},
+            gamma: {value: 45, axis: 3},
+        };
+
+        const animation = {
+            duration: 3, // seconds
+            t: 0,
+        }
+
+        function setupControls() {
+            const alpha = document.getElementById('alpha');
+            const beta = document.getElementById('beta');
+            const gamma = document.getElementById('gamma');
+            const axisAlpha = document.getElementById('axisAlpha');
+            const axisBeta = document.getElementById('axisBeta');
+            const axisGamma = document.getElementById('axisGamma');
+
+            alpha.value = angle.alpha.value;
+            beta.value = angle.beta.value;
+            gamma.value = angle.gamma.value;
+            axisAlpha.value = angle.alpha.axis;
+            axisBeta.value = angle.beta.axis;
+            axisGamma.value = angle.gamma.axis;
+
+            alpha.addEventListener('input', () => {
+                angle.alpha.value = parseFloat(alpha.value);
+                animation.t = 0;
+            });
+            beta.addEventListener('input', () => {
+                angle.beta.value = parseFloat(beta.value);
+                animation.t = 0;
+            });
+            gamma.addEventListener('input', () => {
+                angle.gamma.value = parseFloat(gamma.value);
+                animation.t = 0;
+            });
+            axisAlpha.addEventListener('input', () => {
+                angle.alpha.axis = parseInt(axisAlpha.value);
+                animation.t = 0;
+            });
+            axisBeta.addEventListener('input', () => {
+                angle.beta.axis = parseInt(axisBeta.value);
+                animation.t = 0;
+            });
+            axisGamma.addEventListener('input', () => {
+                angle.gamma.axis = parseInt(axisGamma.value);
+                animation.t = 0;
+            });
+        }
+        setupControls();
 
         const canvas = document.getElementById('scene');
         const renderer = new THREE.WebGLRenderer({canvas});
@@ -142,7 +244,6 @@
 
             return axes;
         }
-
         scene.add(makeAxes(3, "#ffffff"));
 
         function animate() {
