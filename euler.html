@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Euler Angles</title>
+    <meta charset="utf-8">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+        }
+
+        #scene {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@v0.169.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.169.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <canvas id="scene"></canvas>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const canvas = document.getElementById('scene');
+        const renderer = new THREE.WebGLRenderer({canvas});
+
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
+        camera.up.set(0, 0, 1); // z-up
+        camera.position.set(10, 0, 0);
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+
+        function updateViewport() {
+            const dpi = window.devicePixelRatio;
+            const width = Math.floor(canvas.clientWidth * dpi);
+            const height = Math.floor(canvas.clientHeight * dpi);
+
+            if (canvas.width === width && canvas.height === height) {
+                return;
+            }
+
+            renderer.setSize(width, height, false);
+
+            const aspect = width / height;
+            const frustumSize = 20;
+            camera.aspect = aspect;
+            camera.left = -frustumSize * aspect / 2;
+            camera.right = frustumSize * aspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = -frustumSize / 2;
+            camera.updateProjectionMatrix();
+        }
+        // initial viewport update so that makeTextSprite can scale correctly
+        updateViewport();
+
+        const controls = new OrbitControls(camera, canvas);
+        controls.zoomSpeed = 2.0;
+        controls.panSpeed = 0.4;
+
+        const scene = new THREE.Scene();
+
+        function makeAxes(scale, color) {
+            const axes = new THREE.Group();
+
+            const xaxis = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), scale, color, 0.25, 0.2);
+            const yaxis = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), scale, color, 0.25, 0.2);
+            const zaxis = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), scale, color, 0.25, 0.2);
+
+            axes.add(xaxis);
+            axes.add(yaxis);
+            axes.add(zaxis);
+
+            function makeTextSprite(text, {fontSize, color, scale}) {
+                const c = document.createElement('canvas');
+                const ctx = c.getContext('2d');
+
+                ctx.font = `${fontSize} Helvetica, Arial, sans-serif`;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const metrics = ctx.measureText(text);
+                const width = metrics.width;
+                const height = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+
+                const dpi = window.devicePixelRatio;
+
+                c.width = width * dpi;
+                c.height = height * dpi;
+                ctx.scale(dpi, dpi);
+
+                ctx.font = `${fontSize} Helvetica, Arial, sans-serif`;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, width / 2, height / 2);
+
+                const texture = new THREE.CanvasTexture(c);
+                texture.minFilter = THREE.LinearFilter;
+
+                const spriteMaterial = new THREE.SpriteMaterial({map: texture});
+                const sprite = new THREE.Sprite(spriteMaterial);
+
+                const pxscale = canvas.height / (camera.top-camera.bottom); // pixels per world unit
+                const s = scale * dpi * height/pxscale;
+                sprite.scale.set(s * width/height, s, 1);
+
+                return sprite;
+            }
+
+            // Effective 16px font size, but crisper at zoom < 1.0
+            const x = makeTextSprite('X', {fontSize: '32px', color, scale: 0.5});
+            x.position.set(scale+0.3, 0, 0);
+            axes.add(x);
+
+            const y = makeTextSprite('Y', {fontSize: '32px', color, scale: 0.5});
+            y.position.set(0, scale+0.3, 0);
+            axes.add(y);
+
+            const z = makeTextSprite('Z', {fontSize: '32px', color, scale: 0.5});
+            z.position.set(0, 0, scale+0.3);
+            axes.add(z);
+
+            return axes;
+        }
+
+        scene.add(makeAxes(3, "#ffffff"));
+
+        function animate() {
+            updateViewport();
+            renderer.render(scene, camera);
+        }
+
+        renderer.setAnimationLoop(animate);
+    </script>
+</body>
+</html>
