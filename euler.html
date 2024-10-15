@@ -220,7 +220,7 @@
         const canvas = document.getElementById('scene');
         const renderer = new THREE.WebGLRenderer({canvas});
 
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100000000);
         camera.up.set(0, 0, 1); // z-up
         camera.position.set(2, 2, 1);
         camera.lookAt(0, 0, 0);
