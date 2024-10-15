@@ -157,11 +157,11 @@
                 const angle = angles[i];
                 const axis = axes[i];
                 if (axis === 1) {
-                    m.premultiply(rotX(angle));
+                    m.multiply(rotX(angle));
                 } else if (axis === 2) {
-                    m.premultiply(rotY(angle));
+                    m.multiply(rotY(angle));
                 } else if (axis === 3) {
-                    m.premultiply(rotZ(angle));
+                    m.multiply(rotZ(angle));
                 }
             }
 
