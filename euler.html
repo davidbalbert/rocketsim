@@ -114,39 +114,6 @@
             }
         }
 
-        function rotX(theta) {
-            const c = cos(theta);
-            const s = sin(theta);
-            return new THREE.Matrix4().set(
-                1, 0, 0,  0,
-                0, c, -s, 0,
-                0, s, c,  0,
-                0, 0, 0,  1
-            );
-        }
-
-        function rotY(theta) {
-            const c = cos(theta);
-            const s = sin(theta);
-            return new THREE.Matrix4().set(
-                c,  0, s, 0,
-                0,  1, 0, 0,
-                -s, 0, c, 0,
-                0,  0, 0, 1
-            );
-        }
-
-        function rotZ(theta) {
-            const c = cos(theta);
-            const s = sin(theta);
-            return new THREE.Matrix4().set(
-                c, -s, 0, 0,
-                s, c,  0, 0,
-                0, 0,  1, 0,
-                0, 0,  0, 1
-            );
-        }
-
         // euler angle to rotation matrix
         function e2m(e) {
             const angles = e.rotations;
@@ -157,11 +124,11 @@
                 const angle = angles[i];
                 const axis = axes[i];
                 if (axis === 1) {
-                    m.multiply(rotX(angle));
+                    m.multiply(new THREE.Matrix4().makeRotationX(angle));
                 } else if (axis === 2) {
-                    m.multiply(rotY(angle));
+                    m.multiply(new THREE.Matrix4().makeRotationY(angle));
                 } else if (axis === 3) {
-                    m.multiply(rotZ(angle));
+                    m.multiply(new THREE.Matrix4().makeRotationZ(angle));
                 }
             }
 
