@@ -172,7 +172,7 @@
 
         const animation = {
             speed: 1, // radians/second
-            t: 0,
+            t: 0,     // [0, 1)
         }
 
         function setupControls() {
@@ -329,25 +329,24 @@
             updateViewport();
 
             const dt = clock.getDelta();
-            animation.t += dt;
 
             const angles = angle.rotations;
             const total = angles[0] + angles[1] + angles[2];
             const duration = total / animation.speed;
 
-            if (animation.t > duration) {
+            animation.t += dt/duration;
+
+            if (animation.t > 1) {
                 animation.t = 0;
             }
-
-            const progress = animation.t / duration;
 
             const apercent = angles[0] / total;
             const bpercent = angles[1] / total;
             const cpercent = angles[2] / total;
 
-            const alpha = angles[0] * clamp(progress / apercent, 0, 1);
-            const beta = angles[1] * clamp((progress - apercent) / bpercent, 0, 1);
-            const gamma = angles[2] * clamp((progress - apercent - bpercent) / cpercent, 0, 1);
+            const alpha = angles[0] * clamp(animation.t / apercent, 0, 1);
+            const beta = angles[1] * clamp((animation.t - apercent) / bpercent, 0, 1);
+            const gamma = angles[2] * clamp((animation.t - apercent - bpercent) / cpercent, 0, 1);
 
             const e = euler(alpha, beta, gamma, ...angle.axes);
             const m = e2m(e);
